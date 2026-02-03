@@ -172,7 +172,8 @@
                "description": "Java Home dir - will try to autodetect if missing"
             }
          }
-      }
+      },
+      "markdown.markdownItPlugins": true
    },
    "scripts": {
       "semantic-release": "semantic-release",
@@ -210,6 +211,7 @@
       "@semantic-release/git": "9.0.1",
       "@semantic-release/gitlab-config": "^8.0.0",
       "@types/glob": "^7.1.1",
+      "@types/markdown-it": "^14.1.2",
       "@types/mocha": "^7.0.2",
       "@types/node": "^13.11.0",
       "@types/react": "^19.2.10",

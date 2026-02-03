@@ -80,7 +80,7 @@ object Launcher {
 
 
        // Add message tracer for debugging
-       val traceWriter = java.io.PrintWriter(java.io.FileWriter("/tmp/taxi-lsp-jsonrpc.log", true))
+//       val traceWriter = java.io.PrintWriter(java.io.FileWriter("/tmp/taxi-lsp-jsonrpc.log", true))
 
        val launcher = LSPLauncher.Builder<LanguageClient>()
           .setLocalService(compositeServer)
@@ -90,7 +90,7 @@ object Launcher {
           .configureGson { builder ->
              GsonCustomizer.configureGson(builder)
           }
-          .traceMessages(traceWriter)
+//          .traceMessages(traceWriter)
           .create()
 
         // Get the client that request to launch the LS.

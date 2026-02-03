@@ -17,6 +17,9 @@ import {
 import { TaxiQLNotebookSerializer } from "./notebookSerializer";
 import { TaxiQLNotebookController } from "./notebookController";
 import { StubManager } from "./stubManager";
+
+// Import markdown extensions
+import { taxiDiagramPlugin } from "./markdown/taxiDiagramPlugin";
 class CompilerConfig {
    typeChecker: FeatureToggle = FeatureToggle.DISABLED;
 
@@ -93,7 +96,7 @@ async function startPlugin(
          // saving us another maven build cycle.
          const projectJars = [
             "../../../../taxi-lang/core-types",
-            // "../../../../taxi-lang/compiler",
+            "../../../../taxi-lang/compiler",
             "../../../../vyne/vyne-core-types",
             "../../../../vyne/taxi-playground-core",
             "../../taxi-lang-service",
@@ -348,6 +351,15 @@ interface NotebookComponents {
 
 // Store the notebook components globally so we can connect them to the language client
 let notebookComponents: NotebookComponents | null = null;
+
+/**
+ * Extend markdown-it with custom plugins
+ * This is called by VSCode's markdown preview to add custom rendering
+ */
+export function extendMarkdownIt(md: any) {
+   console.log("Extending markdown-it with taxi-diagram plugin");
+   return md.use(taxiDiagramPlugin);
+}
 
 // this method is called when your extension is deactivated
 export function deactivate() {

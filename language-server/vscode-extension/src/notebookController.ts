@@ -57,6 +57,9 @@ export class TaxiQLNotebookController {
       execution.executionOrder = ++this.executionOrder;
       execution.start(Date.now());
 
+      // Clear any previous outputs (including errors) to avoid lingering messages
+      execution.clearOutput();
+
       try {
          // Skip markdown cells
          if (cell.document.languageId === "markdown") {

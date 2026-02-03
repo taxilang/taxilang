@@ -1,7 +1,5 @@
 package lang.taxi.lsp.notebook
 
-import com.fasterxml.jackson.module.kotlin.convertValue
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.orbitalhq.cockpit.core.query.QueryInsightUtils
 import com.orbitalhq.models.json.Jackson
 import com.orbitalhq.playground.StubQueryMessage
@@ -10,7 +8,6 @@ import com.orbitalhq.schemas.OperationNames
 import com.orbitalhq.schemas.fqn
 import com.orbitalhq.schemas.taxi.TaxiSchema
 import com.orbitalhq.stubbing.MockTypedInstanceBuilder
-import com.orbitalhq.stubbing.StubService
 import com.orbitalhq.utils.Ids
 import lang.taxi.lsp.TaxiCompilerService
 import lang.taxi.utils.log
@@ -41,8 +38,13 @@ class TaxiNotebookService(
             arguments = params.parameters
          ).block()
 
+         val sanitizedQueryPlan = parseResult!!.queryPlan.copy(
+            // The QuerySankeyChartRow is causing GSON to have a stack overflow.
+            // Don't know why, but it isn't used, so just remove it.
+            steps = emptyList(),
+         )
          QueryPlanResponse(
-            parseResult!!.queryPlan
+            sanitizedQueryPlan
          )
       }
    }

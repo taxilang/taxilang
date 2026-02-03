@@ -9,15 +9,22 @@ import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
+import com.orbitalhq.models.json.Jackson
 import com.orbitalhq.query.history.DiagramNodeKind
 import com.orbitalhq.query.history.HandleKind
+import com.orbitalhq.schemas.Parameter
 import com.orbitalhq.schemas.RemoteOperation
 import com.orbitalhq.schemas.SchemaMember
+import com.orbitalhq.schemas.Service
+import com.orbitalhq.schemas.asVyneTypeReference
+import lang.taxi.TaxiDocument
+import lang.taxi.TaxiParser
 import lang.taxi.lsp.notebook.ListOperationsResponse
 import java.lang.reflect.Type
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
+import kotlin.reflect.KClass
 
 object GsonCustomizer {
    fun configureGson(builder: GsonBuilder) {
@@ -26,6 +33,17 @@ object GsonCustomizer {
          builder.registerTypeAdapter(it.java, EnumTypeAdapter(it.java))
       }
 
+      // Serialize orbital types with jackson
+      listOf(com.orbitalhq.schemas.Type::class, Service::class, RemoteOperation::class, Parameter::class).forEach {
+         builder.registerTypeHierarchyAdapter(it.java, JacksonAdapter(it))
+      }
+
+
+      // Gson equivalent of TaxiJAcksonModule
+      builder.registerTypeAdapter(TaxiDocument::class.java, TaxiDocumentNoopAdapter)
+      builder.registerTypeAdapter(TaxiParser.DocumentContext::class.java, TaxiDocumentContextNoopAdapter)
+      builder.registerTypeHierarchyAdapter(lang.taxi.types.Type::class.java, TaxiTypeAsVyneQualifiedNameTypeAdapter)
+
       builder.registerTypeHierarchyAdapter(ZonedDateTime::class.java, ZonedDateTypeAdapter)
       builder.registerTypeHierarchyAdapter(LocalDateTime::class.java, LocalDateTimeTypeAdapter)
       builder.registerTypeHierarchyAdapter(Instant::class.java, InstantAdapter)
@@ -33,6 +51,53 @@ object GsonCustomizer {
       // Disable HTML escaping and enable pretty printing for debugging
       builder.disableHtmlEscaping()
    }
+}
+
+// Gson equivalent of TaxiDocumentNoopSerializer etc.
+object TaxiDocumentContextNoopAdapter : NoOpTypeAdapter<TaxiParser.DocumentContext>()
+object TaxiDocumentNoopAdapter : NoOpTypeAdapter<TaxiDocument>()
+abstract class NoOpTypeAdapter<T> : TypeAdapter<T>() {
+   override fun write(out: JsonWriter?, value: T?) {
+      // Write null for these types - they shouldn't be serialized
+      out?.nullValue()
+   }
+
+   override fun read(`in`: JsonReader?): T? {
+      TODO("Not yet implemented")
+   }
+}
+
+class JacksonAdapter<T : Any>(clazz: KClass<T>) : TypeAdapter<T>() {
+   override fun write(out: JsonWriter, value: T?) {
+      if (value == null) {
+         out.nullValue()
+      } else {
+         val qualifiedNameJson = Jackson.defaultObjectMapper.writeValueAsString(value)
+         out.jsonValue(qualifiedNameJson)
+      }
+   }
+
+   override fun read(`in`: JsonReader?): T? {
+      TODO("Not yet implemented")
+   }
+
+}
+
+// Gson equivalent of TaxiTypeAsVyneQualifiedNameSerializer
+object TaxiTypeAsVyneQualifiedNameTypeAdapter : TypeAdapter<lang.taxi.types.Type>() {
+   override fun write(out: JsonWriter, value: lang.taxi.types.Type?) {
+      if (value == null) {
+         out.nullValue()
+      } else {
+         val qualifiedNameJson = Jackson.defaultObjectMapper.writeValueAsString(value.asVyneTypeReference().name)
+         out.jsonValue(qualifiedNameJson)
+      }
+   }
+
+   override fun read(`in`: JsonReader?): lang.taxi.types.Type? {
+      TODO("Not yet implemented")
+   }
+
 }
 
 /**
