@@ -155,12 +155,12 @@ export interface TypeReferenceDto {
 }
 
 /**
- * Response from taxiql/generateQueryPlan
- * Contains the query plan visualization data
+ * Response from taxiql/generateQueryPlan and taxiql/getDiagramData
+ * Contains the query plan/diagram visualization data
  */
 export interface QueryPlanResponse {
-   /** The query plan data (structure defined in docs2.0 query-plan types) */
-   queryPlan: any;
+   /** The diagram/query plan data (structure defined in docs2.0 query-plan types) */
+   diagramData: any;
 
    /** Any compilation messages or errors */
    messages?: string[];
@@ -186,9 +186,21 @@ export interface GeneratePlaceholderResponse {
 }
 
 /**
+ * Request to get diagram data for a Taxi diagram
+ */
+export interface DiagramDataRequest {
+   /** List of type/service names to include in diagram */
+   names: string[];
+
+   /** Project root directory */
+   projectRoot: string;
+}
+
+/**
  * LSP Custom Request Methods
  */
 export const TAXIQL_EXECUTE_WITH_STUBS = "taxiql/executeWithStubs";
 export const TAXIQL_LIST_OPERATIONS = "taxiql/listOperations";
 export const TAXIQL_GENERATE_QUERY_PLAN = "taxiql/generateQueryPlan";
 export const TAXIQL_GENERATE_PLACEHOLDER_STUB = "taxiql/generatePlaceholderStub";
+export const TAXIQL_GET_DIAGRAM_DATA = "taxiql/getDiagramData";

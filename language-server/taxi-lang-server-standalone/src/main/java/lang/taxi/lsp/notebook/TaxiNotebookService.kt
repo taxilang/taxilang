@@ -1,14 +1,18 @@
 package lang.taxi.lsp.notebook
 
 import com.orbitalhq.cockpit.core.query.QueryInsightUtils
+import com.orbitalhq.cockpit.core.query.QueryPlanDiagramBuilder
 import com.orbitalhq.models.json.Jackson
 import com.orbitalhq.playground.StubQueryMessage
 import com.orbitalhq.playground.StubQueryService
 import com.orbitalhq.schemas.OperationNames
+import com.orbitalhq.schemas.Service
+import com.orbitalhq.schemas.Type
 import com.orbitalhq.schemas.fqn
 import com.orbitalhq.schemas.taxi.TaxiSchema
 import com.orbitalhq.stubbing.MockTypedInstanceBuilder
 import com.orbitalhq.utils.Ids
+import lang.taxi.TaxiDocument
 import lang.taxi.lsp.TaxiCompilerService
 import lang.taxi.utils.log
 import reactor.core.publisher.Flux
@@ -219,6 +223,40 @@ class TaxiNotebookService(
             GeneratePlaceholderResponse(jsonStub = json)
          } catch (e: Exception) {
             log().error("Error generating placeholder stub", e)
+            throw e
+         }
+      }
+   }
+
+   override fun getDiagramData(params: DiagramDataRequest): CompletableFuture<QueryPlanResponse> {
+      log().info("Received getDiagramData request for names: ${params.names}")
+
+      return CompletableFuture.supplyAsync {
+         try {
+            // TODO: Implement actual diagram generation
+            // For now, return a stub/empty response
+            log().info("Returning stub diagram data for: ${params.names}")
+
+            val taxi = compilerService.lastSuccessfulCompilation()?.documentOrEmpty ?: TaxiDocument.empty()
+            val schema = TaxiSchema(taxi, emptyList())
+            val builder = QueryPlanDiagramBuilder(schema)
+            params.names.forEach { name ->
+               try {
+                  when (val member = schema.getMember(name.fqn())) {
+                     is Type -> builder.addType(member)
+                     is Service -> builder.addService(member)
+                  }
+               } catch (e: Exception) {
+                  // TODO : How do we handle bad types?
+               }
+            }
+            val diagram = builder.build("")
+            // Return empty diagram data - the actual implementation will be provided later
+            QueryPlanResponse(
+               diagramData = diagram
+            )
+         } catch (e: Exception) {
+            log().error("Error generating diagram data", e)
             throw e
          }
       }

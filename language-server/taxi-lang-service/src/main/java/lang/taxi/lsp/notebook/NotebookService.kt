@@ -37,6 +37,13 @@ interface NotebookService {
     */
    @JsonRequest("taxiql/generatePlaceholderStub")
    fun generatePlaceholderStub(params: GeneratePlaceholderRequest): CompletableFuture<GeneratePlaceholderResponse>
+
+   /**
+    * Get diagram data for rendering a Taxi diagram.
+    * Endpoint: taxiql/getDiagramData
+    */
+   @JsonRequest("taxiql/getDiagramData")
+   fun getDiagramData(params: DiagramDataRequest): CompletableFuture<QueryPlanResponse>
 }
 
 // Request/Response data classes
@@ -143,3 +150,7 @@ data class GeneratePlaceholderResponse(
    val jsonStub: String
 )
 
+data class DiagramDataRequest(
+   val names: List<String>,
+   val projectRoot: String
+)

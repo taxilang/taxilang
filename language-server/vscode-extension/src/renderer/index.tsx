@@ -583,7 +583,7 @@ const QueryPlanViewer: React.FC<{ outputItem: OutputItem }> = ({ outputItem }) =
 // Store roots to reuse them instead of creating new ones
 const rootMap = new WeakMap<HTMLElement, any>();
 
-// Renderer activation function
+// Renderer activation function (for notebook context)
 export const activate = (context: RendererContext) => {
    console.log('TaxiQL Renderer activated');
    return {
@@ -610,3 +610,52 @@ export const activate = (context: RendererContext) => {
       },
    };
 };
+
+// Standalone initialization for diagram panel (non-notebook context)
+// Listen for custom event from diagram panel webview
+if (typeof window !== 'undefined') {
+   window.addEventListener('renderDiagram', (event: any) => {
+      console.log('Received renderDiagram event', event.detail);
+      const { diagramData, elements } = event.detail;
+
+      console.log('diagramData:', diagramData);
+      console.log('diagramData.diagramData:', diagramData?.diagramData);
+      console.log('Type of diagramData:', typeof diagramData);
+
+      const rootElement = document.getElementById('diagram-root');
+      if (rootElement) {
+         const root = createRoot(rootElement);
+
+         // The server returns QueryPlanResponse with diagramData property
+         // which contains the actual QueryPlanDiagramData
+         const queryPlanData = diagramData?.diagramData || diagramData;
+
+         console.log('Final queryPlanData:', queryPlanData);
+         console.log('Has queryPlanData:', !!queryPlanData);
+
+         // Render the query plan visualization
+         root.render(
+            <div style={{ width: '100%', height: '100%', padding: '20px' }}>
+               <h3 style={{ marginBottom: '16px', fontSize: '16px' }}>
+                  Taxi Diagram ({elements.length} {elements.length === 1 ? 'element' : 'elements'})
+               </h3>
+               {queryPlanData ? (
+                  <QueryPlanVisualization
+                     queryPlanData={queryPlanData as QueryPlanDiagramData}
+                     height={window.innerHeight - 100}
+                  />
+               ) : (
+                  <div style={{
+                     padding: '20px',
+                     background: 'var(--vscode-editor-background)',
+                     border: '1px solid var(--vscode-panel-border)',
+                     borderRadius: '4px',
+                  }}>
+                     No diagram data available (check console for details)
+                  </div>
+               )}
+            </div>
+         );
+      }
+   });
+}

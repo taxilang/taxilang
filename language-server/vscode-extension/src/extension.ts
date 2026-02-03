@@ -20,6 +20,9 @@ import { StubManager } from "./stubManager";
 
 // Import markdown extensions
 import { taxiDiagramPlugin } from "./markdown/taxiDiagramPlugin";
+import { setLanguageClient } from "./markdown/languageClientHolder";
+import { TaxiDiagramCodeLensProvider } from "./markdown/TaxiDiagramCodeLensProvider";
+import { TaxiDiagramPanel } from "./markdown/TaxiDiagramPanel";
 class CompilerConfig {
    typeChecker: FeatureToggle = FeatureToggle.DISABLED;
 
@@ -46,6 +49,15 @@ export async function activate(context: vscode.ExtensionContext) {
    // Register notebook support
    notebookComponents = registerNotebookSupport(context);
 
+   // Register markdown diagram CodeLens provider
+   const diagramCodeLensProvider = new TaxiDiagramCodeLensProvider();
+   context.subscriptions.push(
+      vscode.languages.registerCodeLensProvider(
+         { language: 'markdown' },
+         diagramCodeLensProvider
+      )
+   );
+
    const compilerConfig = new CompilerConfig();
 
    const taxiConfig = workspace.getConfiguration("taxi");
@@ -67,6 +79,14 @@ export async function activate(context: vscode.ExtensionContext) {
          await startPlugin(home, context, compilerConfig);
       });
    }
+
+   // Return an object with extendMarkdownIt for markdown preview support
+   return {
+      extendMarkdownIt(md: any) {
+         console.log("Extending markdown-it with taxi-diagram plugin");
+         return md.use(taxiDiagramPlugin);
+      }
+   };
 }
 
 async function startPlugin(
@@ -230,6 +250,24 @@ async function startPlugin(
          console.log("Notebook components connected to language client");
       }
 
+      // Store language client for markdown diagram rendering
+      setLanguageClient(languageClient);
+
+      // Register command to show diagram preview (called from CodeLens)
+      context.subscriptions.push(
+         vscode.commands.registerCommand(
+            'taxi.showDiagramPreview',
+            async (documentUri: vscode.Uri, startLine: number) => {
+               await TaxiDiagramPanel.show(
+                  context.extensionUri,
+                  languageClient,
+                  documentUri,
+                  startLine
+               );
+            }
+         )
+      );
+
       // Register progress notifications
       registerProgressNotifications(languageClient);
 
@@ -351,15 +389,6 @@ interface NotebookComponents {
 
 // Store the notebook components globally so we can connect them to the language client
 let notebookComponents: NotebookComponents | null = null;
-
-/**
- * Extend markdown-it with custom plugins
- * This is called by VSCode's markdown preview to add custom rendering
- */
-export function extendMarkdownIt(md: any) {
-   console.log("Extending markdown-it with taxi-diagram plugin");
-   return md.use(taxiDiagramPlugin);
-}
 
 // this method is called when your extension is deactivated
 export function deactivate() {

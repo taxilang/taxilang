@@ -63,4 +63,8 @@ class TaxiLanguageServerWithNotebooks(
    override fun generatePlaceholderStub(params: GeneratePlaceholderRequest): CompletableFuture<GeneratePlaceholderResponse> {
       return notebookService.generatePlaceholderStub(params)
    }
+
+   override fun getDiagramData(params: DiagramDataRequest): CompletableFuture<QueryPlanResponse> {
+      return notebookService.getDiagramData(params)
+   }
 }

@@ -173,14 +173,18 @@
             }
          }
       },
-      "markdown.markdownItPlugins": true
+      "markdown.markdownItPlugins": true,
+      "markdown.previewScripts": [
+         "./out/markdown/diagramPreview.js"
+      ]
    },
    "scripts": {
       "semantic-release": "semantic-release",
       "vscode:prepublish": "npm run sync-pom-version && npm run compile && cp ../taxi-lang-server-standalone/target/taxi-lang-server-jar-with-dependencies.jar out/",
-      "compile": "tsc -p ./ && npm run compile:renderer && npm run compile:stub-editor",
+      "compile": "tsc -p ./ && npm run compile:renderer && npm run compile:stub-editor && npm run compile:diagram-preview",
       "compile:renderer": "node esbuild.renderer.js",
       "compile:stub-editor": "node esbuild.stub-editor.js",
+      "compile:diagram-preview": "node esbuild.diagram-preview.js",
       "lint": "eslint src --ext ts",
       "watch": "tsc -watch -p ./",
       "pretest": "npm run compile && npm run lint",
