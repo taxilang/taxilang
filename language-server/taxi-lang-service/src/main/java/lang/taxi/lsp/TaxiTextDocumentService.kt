@@ -136,6 +136,28 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    LanguageClientAware {
    constructor(compilerService: TaxiCompilerService) : this(LspServicesConfig(compilerService = compilerService))
 
+   companion object {
+      /**
+       * HOCON configuration files that receive language server support
+       * (completions, diagnostics, validation)
+       */
+      private val SUPPORTED_HOCON_FILES = setOf(
+         "workspace.conf",
+         "taxi.conf",
+         "connections.conf",
+         "services.conf",
+         "env.conf",
+         "auth.conf"
+      )
+
+      /**
+       * Check if a URI corresponds to a supported HOCON configuration file
+       */
+      private fun isSupportedHoconFile(uri: String): Boolean {
+         return SUPPORTED_HOCON_FILES.any { uri.endsWith(it) }
+      }
+   }
+
    val lastCompilationResult: CompilationResult
       get() {
          return this.compilerService.getOrComputeLastCompilationResult()
@@ -239,8 +261,8 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    override fun completion(position: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
-      if (position.textDocument.uri.endsWith(".conf")) {
-         // Handle taxi.conf completions
+      if (isSupportedHoconFile(position.textDocument.uri)) {
+         // Handle HOCON config file completions
          val content = taxiConfContents[position.textDocument.uri] ?: ""
          val completionList = taxiConfService.getCompletions(position.textDocument.uri, content, position)
          return CompletableFuture.completedFuture(Either.forRight(completionList))
@@ -256,7 +278,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    override fun definition(params: DefinitionParams): CompletableFuture<Either<MutableList<out Location>, MutableList<out LocationLink>>> {
-      if (params.textDocument.uri.endsWith(".conf")) {
+      if (isSupportedHoconFile(params.textDocument.uri)) {
          return CompletableFuture.completedFuture(Either.forLeft(mutableListOf()))
       }
       val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
@@ -264,7 +286,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    override fun hover(params: HoverParams): CompletableFuture<Hover> {
-      if (params.textDocument.uri.endsWith(".conf")) {
+      if (isSupportedHoconFile(params.textDocument.uri)) {
          return CompletableFuture.completedFuture(Hover(MarkupContent("markdown", "")))
       }
       val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
@@ -290,7 +312,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    override fun formatting(params: DocumentFormattingParams): CompletableFuture<MutableList<out TextEdit>> {
-      if (params.textDocument.uri.endsWith(".conf")) {
+      if (isSupportedHoconFile(params.textDocument.uri)) {
          return CompletableFuture.completedFuture(mutableListOf())
       }
       val content = compilerService.source(params.textDocument.uri)
@@ -298,8 +320,8 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    override fun didOpen(params: DidOpenTextDocumentParams) {
-      // Handle taxi.conf files separately
-      if (params.textDocument.uri.endsWith(".conf")) {
+      // Handle supported HOCON config files separately
+      if (isSupportedHoconFile(params.textDocument.uri)) {
          taxiConfContents[params.textDocument.uri] = params.textDocument.text
          computeTaxiConfDiagnostics(params.textDocument.uri, params.textDocument.text)
          publishDiagnosticMessages()
@@ -355,8 +377,8 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    override fun didClose(params: DidCloseTextDocumentParams) {
-      // Clean up taxi.conf caches
-      if (params.textDocument.uri.endsWith(".conf")) {
+      // Clean up HOCON config file caches
+      if (isSupportedHoconFile(params.textDocument.uri)) {
          taxiConfContents.remove(params.textDocument.uri)
          taxiConfService.clearCache(params.textDocument.uri)
       }
@@ -374,8 +396,8 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       val sourceName = params.textDocument.uri
 
 
-      if (sourceName.endsWith("taxi.conf")) {
-         // Store the content and compute diagnostics in real-time
+      if (isSupportedHoconFile(sourceName)) {
+         // Store the content and compute diagnostics in real-time for supported HOCON files
          taxiConfContents[sourceName] = content
          computeTaxiConfDiagnostics(sourceName, content)
          publishDiagnosticMessages()

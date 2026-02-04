@@ -25,5 +25,6 @@ data class LspServicesConfig(
     val signatureHelpService: SignatureHelpService = SignatureHelpService(),
     val lintingService: LintingService = LintingService(),
    val semanticTokenService: SemanticTokenService = SemanticTokenService(),
+   // Service for HOCON config files (taxi.conf, workspace.conf, connections.conf, services.conf, env.conf, auth.conf)
    val taxiConfService: TaxiConfService = TaxiConfService()
 )

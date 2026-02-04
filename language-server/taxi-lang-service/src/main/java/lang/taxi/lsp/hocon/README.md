@@ -2,6 +2,18 @@
 
 This package provides a generic, reflection-based language server framework for HOCON configuration files backed by Kotlin data classes.
 
+## Currently Supported Files
+
+The following HOCON configuration files have language server support:
+- `taxi.conf` - Taxi project configuration
+- `workspace.conf` - Workspace configuration
+- `connections.conf` - Connection configuration
+- `services.conf` - Services configuration
+- `env.conf` - Environment configuration
+- `auth.conf` - Authentication configuration
+
+To add support for additional HOCON files, see the Quick Start guide below.
+
 ## Quick Start
 
 Create language server support for any HOCON file in 3 steps:
