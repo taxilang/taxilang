@@ -1,60 +1,73 @@
 package lang.taxi.lsp.taxiconf
 
-import org.eclipse.lsp4j.CompletionItem
+import lang.taxi.lsp.hocon.HoconService
+import lang.taxi.lsp.hocon.hoconService
+import lang.taxi.packages.TaxiPackageProject
 import org.eclipse.lsp4j.CompletionList
 import org.eclipse.lsp4j.CompletionParams
 import org.eclipse.lsp4j.Diagnostic
-import org.eclipse.lsp4j.Position
-import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Main service for handling taxi.conf files in the language server.
- * Provides completions, diagnostics, and validation.
+ * Service for handling taxi.conf files in the language server.
+ *
+ * Provides completions, diagnostics, and validation specifically for taxi.conf files
+ * using the generic HOCON framework with taxi-specific customizations.
  */
 class TaxiConfService {
 
-   private val schemaProvider = TaxiConfSchemaProvider()
-   private val parser = TaxiConfParser()
-   private val completionProvider = TaxiConfCompletionProvider(schemaProvider)
+   companion object {
+      /**
+         * Fields in TaxiPackageProject that are computed/derived and should not be
+         * suggested in completions or validated in the config file.
+         */
+      private val IGNORED_FIELDS = setOf(
+         "identifier",
+         "dependencyPackages",
+         "packageRootPath",
+         "sourceRootPath",
+         "taxiConfFile"
+      )
+   }
 
-   // Cache parse results per document URI
-   private val parseCache = ConcurrentHashMap<String, TaxiConfParser.ParseResult>()
+   private val hoconService: HoconService<TaxiPackageProject> = hoconService<TaxiPackageProject>()
+      .ignoreFields(*IGNORED_FIELDS.toTypedArray())
+      .withValidator(TaxiConfValidator())
+      .withCustomizer(TaxiConfCompletionCustomizer())
+      .withSourceName("taxi.conf")
+      .build()
 
    /**
     * Get completions for a taxi.conf file
     */
    fun getCompletions(uri: String, content: String, params: CompletionParams): CompletionList {
-      val items = completionProvider.getCompletions(content, params.position)
-      return CompletionList(false, items)
+      return hoconService.getCompletions(uri, content, params)
    }
 
    /**
     * Get diagnostics for a taxi.conf file
     */
    fun getDiagnostics(uri: String, content: String): List<Diagnostic> {
-      val parseResult = parser.parse(content)
-      parseCache[uri] = parseResult
-      return parseResult.diagnostics
+      return hoconService.getDiagnostics(uri, content)
+   }
+
+   /**
+    * Get the cached parse result for a URI
+    */
+   fun getCachedParseResult(uri: String): TaxiPackageProject? {
+      return hoconService.getCachedParseResult(uri)?.value
    }
 
    /**
     * Clear the cache for a specific URI
     */
    fun clearCache(uri: String) {
-      parseCache.remove(uri)
+      hoconService.clearCache(uri)
    }
 
    /**
     * Clear all caches
     */
    fun clearAllCaches() {
-      parseCache.clear()
-   }
-
-   /**
-    * Get the cached parse result for a URI
-    */
-   fun getCachedParseResult(uri: String): TaxiConfParser.ParseResult? {
-      return parseCache[uri]
+      hoconService.clearAllCaches()
    }
 }

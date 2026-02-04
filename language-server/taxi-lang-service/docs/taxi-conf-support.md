@@ -1,6 +1,6 @@
 # Taxi.conf Language Server Support
 
-This document describes the language server support for `taxi.conf` configuration files.
+This document describes the language server support for `taxi.conf` configuration files, which is built on top of the [generic HOCON support framework](hocon-support.md).
 
 ## Features
 
@@ -8,23 +8,26 @@ This document describes the language server support for `taxi.conf` configuratio
 
 The language server provides intelligent auto-completion suggestions when editing `taxi.conf` files:
 
-- **Top-level properties**: All properties from `TaxiPackageProject` are suggested with appropriate snippets
-- **Nested object properties**: Properties for complex types like `Repository`, `Credentials`, `PluginSettings`
-- **Map keys**: Known keys for maps like `linter` (linter rule names) and `plugins` (plugin names)
-- **Enum values**: Suggestions for enum types like `Severity` (INFO, WARNING, ERROR)
-- **Smart snippets**: Complex objects are inserted with placeholder templates
+- **Top-level properties**: All properties from `TaxiPackageProject` are suggested
+- **Nested object properties**: Properties for `Repository`, `Credentials`, `PluginSettings`, etc.
+- **Known linter rules**: Suggests common linter rule names with configuration snippets
+- **Known plugins**: Suggests common plugin names (taxi/kotlin, taxi/open-api, etc.)
+- **Enum values**: Suggestions for `Severity` (INFO, WARNING, ERROR)
+- **Custom documentation**: Taxi-specific help text for each property
 
 Example completions:
 ```hocon
 # Type "name" and press Ctrl+Space
-name: "${1}"
+name: "namespace/project-name"
 
-# Type "plugins" and press Ctrl+Space
+# Type "plugins" and press Ctrl+Space - suggests known plugins
 plugins: {
-  ${1}
+  "taxi/kotlin": {
+    ${1}
+  }
 }
 
-# Inside linter section, known rules are suggested
+# Inside linter section - suggests known rules
 linter: {
   no-duplicate-types-on-models: {
     enabled: true
@@ -35,16 +38,16 @@ linter: {
 
 ### 2. Real-time Diagnostics
 
-The language server validates `taxi.conf` files as you type and provides immediate feedback:
+The language server validates `taxi.conf` files as you type:
 
 #### Error Diagnostics
-- **Parse errors**: HOCON syntax errors are highlighted immediately
-- **Missing required fields**: `name` and `version` fields are required
-- **Type mismatches**: Invalid value types are reported
+- **Parse errors**: HOCON syntax errors
+- **Missing required fields**: `name` and `version` are required
+- **Type mismatches**: Reported by config4k during extraction
 
 #### Warning Diagnostics
-- **Invalid version format**: Version should match `X.Y.Z` or `X.Y.Z-SNAPSHOT` pattern
-- **Invalid project name**: Project name should be in `namespace/project-name` format
+- **Invalid version format**: Version should match `X.Y.Z` or `X.Y.Z-SNAPSHOT`
+- **Invalid project name**: Project name should be `namespace/project-name`
 
 Example diagnostics:
 ```hocon
@@ -55,11 +58,11 @@ sourceRoot: src/
 name: taxi/sample
 version: abc
 
-# WARNING: Invalid project name format
+# WARNING: Invalid project name
 name: my-project-without-namespace
 version: 1.0.0
 
-# Valid configuration (no diagnostics)
+# Valid (no diagnostics)
 name: org.example/my-project
 version: 1.0.0
 ```
@@ -72,79 +75,134 @@ The implementation uses Kotlin reflection to extract the configuration schema fr
 - **Type-safe**: All property types, nullability, and default values are extracted from the actual class definition
 - **No duplication**: No need to maintain a separate schema definition
 
-## Implementation Details
+## Implementation
 
-### Architecture
+The taxi.conf support is implemented using three specialized components on top of the generic HOCON framework:
 
-The taxi.conf support is implemented in the following components:
+### 1. TaxiConfValidator
+Validates taxi-specific rules:
+- Required fields (name, version)
+- Version format (semantic versioning)
+- Project name format (namespace/project)
 
-1. **TaxiConfSchemaProvider**: Uses reflection to extract schema information from `TaxiPackageProject`
-2. **TaxiConfParser**: Parses and validates taxi.conf files using TypeSafe Config and config4k
-3. **TaxiConfCompletionProvider**: Provides context-aware completions based on the schema
-4. **TaxiConfService**: Coordinates the above components and manages caching
+### 2. TaxiConfCompletionCustomizer
+Provides taxi-specific completions:
+- **Linter rules**: `no-duplicate-types-on-models`, `no-primitive-types-on-models`, `unused-import`, `type-naming-convention`
+- **Plugin names**: `taxi/kotlin`, `taxi/open-api`, `taxi/swagger`, `taxi/protobuf`
+- **Custom documentation**: Detailed help text for taxi properties
 
-### Integration Points
+### 3. TaxiConfService
+Coordinates the HOCON framework with taxi-specific customizations:
+```kotlin
+class TaxiConfService {
+   private val hoconService = hoconService<TaxiPackageProject>()
+      .ignoreFields("identifier", "dependencyPackages", "packageRootPath", "sourceRootPath")
+      .withValidator(TaxiConfValidator())
+      .withCustomizer(TaxiConfCompletionCustomizer())
+      .withSourceName("taxi.conf")
+      .build()
+}
+```
+
+## Ignored Fields
+
+The following fields in `TaxiPackageProject` are computed/derived and are not shown in completions:
+- `identifier` - Computed from name
+- `dependencyPackages` - Resolved at runtime
+- `packageRootPath` - Derived from file location
+- `sourceRootPath` - Derived from sourceRoot + file location
+- `taxiConfFile` - Set during loading
+
+## Integration
 
 The taxi.conf support is integrated into `TaxiTextDocumentService`:
 
 - **didOpen**: Parses the file and publishes initial diagnostics
 - **didChange**: Re-parses on every change and updates diagnostics in real-time
 - **didSave**: Triggers full workspace reload (existing behavior)
-- **didClose**: Cleans up caches
 - **completion**: Returns taxi.conf-specific completions
-
-### Configuration Classes
-
-The following classes are supported for nested object completions:
-
-- `Repository`: Package repository configuration
-- `Credentials`: Authentication credentials
-- `PluginSettings`: Plugin resolution settings
-- `TaxiConfLinterRuleConfig`: Linter rule configuration
-
-### Known Linter Rules
-
-The completion provider suggests these common linter rules:
-- `no-duplicate-types-on-models`
-- `no-primitive-types-on-models`
-- `unused-import`
-- `type-naming-convention`
-
-### Known Plugins
-
-The completion provider suggests these common plugins:
-- `taxi/kotlin`
-- `taxi/open-api`
-- `taxi/swagger`
-- `taxi/protobuf`
 
 ## Testing
 
 Tests are located in `TaxiConfServiceTest.kt` and cover:
-
 - Top-level completions
+- Ignored fields are not suggested
+- Custom documentation
 - Diagnostics for various error cases
-- Cache management
+- Parse error handling
 - Complex configuration validation
+- Cache management
+
+## Customization Examples
+
+### Adding New Linter Rules
+
+To add support for new linter rules, update `TaxiConfCompletionCustomizer`:
+
+```kotlin
+private val KNOWN_LINTER_RULES = listOf(
+   "no-duplicate-types-on-models",
+   "no-primitive-types-on-models",
+   "unused-import",
+   "type-naming-convention",
+   "new-rule-name"  // Add here
+)
+```
+
+### Adding New Plugins
+
+To add support for new plugins:
+
+```kotlin
+private val KNOWN_PLUGINS = listOf(
+   "taxi/kotlin",
+   "taxi/open-api",
+   "taxi/swagger",
+   "taxi/protobuf",
+   "taxi/new-plugin"  // Add here
+)
+```
+
+### Dynamic Completions
+
+For more advanced scenarios, completions can be loaded dynamically:
+
+```kotlin
+override fun getMapKeyCompletions(
+   mapPropertyPath: String,
+   prefix: String,
+   schema: HoconSchemaProvider.PropertySchema
+): List<CompletionItem>? {
+   if (mapPropertyPath == "plugins") {
+      // Load from plugin registry
+      return pluginRegistry.getAvailablePlugins().map { plugin ->
+         CompletionItem(plugin.name).apply {
+            detail = plugin.version
+            documentation = plugin.description
+         }
+      }
+   }
+   return null
+}
+```
+
+## Example Configuration
+
+See [complete-example.conf](../src/test/resources/taxi-conf-examples/complete-example.conf) for a comprehensive example demonstrating all available configuration options.
 
 ## Future Enhancements
 
-Potential improvements for the future:
+Potential improvements:
 
-1. **Go-to-definition**: Jump to plugin definitions or dependency sources
-2. **Hover documentation**: Show inline documentation for properties
-3. **Code actions**: Quick fixes for common errors
-4. **Dynamic linter rules**: Load linter rule names from the compiler
-5. **Dynamic plugin discovery**: Load plugin names from repositories
-6. **Better position tracking**: More accurate error position reporting in HOCON
-7. **Reference validation**: Validate that referenced dependencies exist
-8. **Version validation**: Check if specified versions are available in repositories
+1. **Dynamic linter rules**: Load rule names from the compiler at runtime
+2. **Dynamic plugin discovery**: Query plugin repositories for available plugins
+3. **Hover documentation**: Show inline docs when hovering over properties
+4. **Go-to-definition**: Jump to plugin or dependency sources
+5. **Code actions**: Quick fixes for common configuration errors
+6. **Reference validation**: Validate that dependencies exist in repositories
+7. **Version suggestions**: Suggest available versions for dependencies
 
-## Dependencies
+## See Also
 
-The implementation relies on:
-
-- **TypeSafe Config**: For HOCON parsing
-- **config4k**: For deserializing Config to Kotlin data classes
-- **Kotlin Reflection**: For schema extraction
-- **Eclipse LSP4J**: For LSP protocol implementation
+- [Generic HOCON Support Framework](hocon-support.md) - Documentation for the underlying framework
+- [TaxiPackageProject](../../../../core-types/src/main/java/lang/taxi/packages/TaxiPackageProject.kt) - The data class backing taxi.conf

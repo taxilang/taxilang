@@ -1,12 +1,6 @@
-package lang.taxi.lsp.taxiconf
+package lang.taxi.lsp.hocon
 
 import com.typesafe.config.Config
-import lang.taxi.linter.TaxiConfLinterRuleConfig
-import lang.taxi.messages.Severity
-import lang.taxi.packages.Credentials
-import lang.taxi.packages.PluginSettings
-import lang.taxi.packages.Repository
-import lang.taxi.packages.TaxiPackageProject
 import java.nio.file.Path
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -16,12 +10,21 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.javaType
 
 /**
- * Provides schema information for taxi.conf files by inspecting
- * the TaxiPackageProject data class using reflection.
+ * Generic schema provider for HOCON configuration files using Kotlin reflection.
  *
- * This ensures the schema stays up-to-date as the TaxiPackageProject class evolves.
+ * Extracts schema information from any Kotlin data class to provide:
+ * - Property names, types, and nullability
+ * - Default values (when available)
+ * - Support for primitives, collections, nested objects, and enums
+ *
+ * This ensures schema information stays synchronized with the actual Kotlin types.
+ *
+ * @param T The Kotlin type representing the HOCON configuration
  */
-class TaxiConfSchemaProvider {
+class HoconSchemaProvider<T : Any>(
+   private val klass: KClass<T>,
+   private val ignoredFields: Set<String> = emptySet()
+) {
 
    companion object {
       private val PRIMITIVE_TYPES = setOf(
@@ -31,13 +34,6 @@ class TaxiConfSchemaProvider {
          Double::class,
          Float::class,
          Boolean::class
-      )
-
-      private val IGNORED_FIELDS = setOf(
-         "identifier",
-         "dependencyPackages",
-         "packageRootPath",
-         "sourceRootPath"
       )
    }
 
@@ -51,7 +47,7 @@ class TaxiConfSchemaProvider {
 
    sealed class PropertyType {
       data class Primitive(val typeName: String) : PropertyType()
-      data class Object(val className: String, val properties: List<PropertySchema>) : PropertyType()
+      data class Object(val className: String, val klass: KClass<*>, val properties: List<PropertySchema>) : PropertyType()
       data class Map(val keyType: String, val valueType: PropertyType) : PropertyType()
       data class List(val elementType: PropertyType) : PropertyType()
       data class Enum(val className: String, val values: kotlin.collections.List<String>) : PropertyType()
@@ -60,10 +56,10 @@ class TaxiConfSchemaProvider {
    private val schemaCache = mutableMapOf<KClass<*>, kotlin.collections.List<PropertySchema>>()
 
    /**
-    * Get the schema for taxi.conf files
+    * Get the complete schema for the root configuration type
     */
    fun getSchema(): kotlin.collections.List<PropertySchema> {
-      return extractSchemaFromClass(TaxiPackageProject::class)
+      return extractSchemaFromClass(klass, ignoredFields)
    }
 
    /**
@@ -91,16 +87,40 @@ class TaxiConfSchemaProvider {
       return result
    }
 
-   private fun extractSchemaFromClass(klass: KClass<*>): kotlin.collections.List<PropertySchema> {
-      if (schemaCache.containsKey(klass)) {
-         return schemaCache[klass]!!
+   /**
+    * Get all top-level property names
+    */
+   fun getTopLevelKeys(): kotlin.collections.List<String> {
+      return getSchema().map { it.name }
+   }
+
+   /**
+    * Get properties of a nested object type
+    */
+   fun getObjectProperties(objectType: PropertyType.Object): kotlin.collections.List<PropertySchema> {
+      return objectType.properties
+   }
+
+   /**
+    * Get properties of a nested object by class
+    */
+   fun getObjectProperties(klass: KClass<*>): kotlin.collections.List<PropertySchema> {
+      return extractSchemaFromClass(klass, emptySet())
+   }
+
+   private fun extractSchemaFromClass(
+      targetClass: KClass<*>,
+      fieldsToIgnore: Set<String> = emptySet()
+   ): kotlin.collections.List<PropertySchema> {
+      if (schemaCache.containsKey(targetClass)) {
+         return schemaCache[targetClass]!!
       }
 
-      val constructor = klass.primaryConstructor ?: return emptyList()
+      val constructor = targetClass.primaryConstructor ?: return emptyList()
       val parameters = constructor.parameters.associateBy { it.name }
 
-      val properties = klass.memberProperties
-         .filter { it.name !in IGNORED_FIELDS }
+      val properties = targetClass.memberProperties
+         .filter { it.name !in fieldsToIgnore }
          .mapNotNull { prop ->
             val param = parameters[prop.name] ?: return@mapNotNull null
 
@@ -108,13 +128,11 @@ class TaxiConfSchemaProvider {
                name = prop.name,
                type = extractPropertyType(prop.returnType),
                isNullable = prop.returnType.isMarkedNullable,
-               defaultValue = param.isOptional.let {
-                  if (it) getDefaultValue(prop) else null
-               }
+               defaultValue = if (param.isOptional) null else null // Default values would need bytecode inspection
             )
          }
 
-      schemaCache[klass] = properties
+      schemaCache[targetClass] = properties
       return properties
    }
 
@@ -126,7 +144,7 @@ class TaxiConfSchemaProvider {
          return PropertyType.Primitive(classifier.simpleName ?: "Unknown")
       }
 
-      // Check for known types
+      // Check for known types that should be treated as primitives
       return when (classifier) {
          Path::class -> PropertyType.Primitive("String")
          Config::class -> PropertyType.Map("String", PropertyType.Primitive("Any"))
@@ -156,61 +174,26 @@ class TaxiConfSchemaProvider {
             val enumValues = (classifier.java.enumConstants as Array<Enum<*>>).map { it.name }
             PropertyType.Enum(classifier.simpleName ?: "Unknown", enumValues)
          } else {
-            // Complex object
+            // Complex object - recursively extract schema
             PropertyType.Object(
                className = classifier.simpleName ?: "Unknown",
-               properties = extractSchemaFromClass(classifier)
+               klass = classifier,
+               properties = extractSchemaFromClass(classifier, emptySet())
             )
          }
       }
    }
 
-   private fun getDefaultValue(prop: KProperty1<*, *>): Any? {
-      // We need to check the primary constructor parameter for default values
-      // This is a simplified implementation - in reality, we'd need to
-      // instantiate a default instance or parse the bytecode
-      val klass = when (prop.name) {
-         "sourceRoot" -> return "."
-         "output" -> return "dist/"
-         "dependencies" -> return emptyMap<String, String>()
-         "repositories" -> return emptyList<Repository>()
-         "plugins" -> return emptyMap<String, Config>()
-         "pluginSettings" -> return PluginSettings()
-         "publishToRepository" -> return null
-         "credentials" -> return emptyList<Credentials>()
-         "linter" -> return emptyMap<String, TaxiConfLinterRuleConfig>()
-         "additionalSources" -> return emptyMap<String, String>()
-         "taxiConfFile" -> return null
-         else -> null
+   /**
+    * Get type description as a human-readable string
+    */
+   fun getTypeDescription(type: PropertyType): String {
+      return when (type) {
+         is PropertyType.Primitive -> type.typeName
+         is PropertyType.Object -> type.className
+         is PropertyType.Map -> "Map<${type.keyType}, ${getTypeDescription(type.valueType)}>"
+         is PropertyType.List -> "List<${getTypeDescription(type.elementType)}>"
+         is PropertyType.Enum -> type.className
       }
-      return klass
-   }
-
-   /**
-    * Get all possible top-level keys in taxi.conf
-    */
-   fun getTopLevelKeys(): kotlin.collections.List<String> {
-      return getSchema().map { it.name }
-   }
-
-   /**
-    * Get all properties of a complex type by class name
-    */
-   fun getObjectProperties(className: String): kotlin.collections.List<PropertySchema> {
-      val klass = when (className) {
-         "Repository" -> Repository::class
-         "Credentials" -> Credentials::class
-         "PluginSettings" -> PluginSettings::class
-         "TaxiConfLinterRuleConfig" -> TaxiConfLinterRuleConfig::class
-         else -> return emptyList()
-      }
-      return extractSchemaFromClass(klass)
-   }
-
-   /**
-    * Get enum values for Severity (used in linter configuration)
-    */
-   fun getSeverityValues(): kotlin.collections.List<String> {
-      return Severity.entries.map { it.name }
    }
 }
