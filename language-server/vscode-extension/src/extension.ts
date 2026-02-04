@@ -191,6 +191,7 @@ async function startPlugin(
             // Support TaxiQL in notebook cells
             { scheme: "vscode-notebook-cell", language: "taxi" },
             { scheme: "vscode-notebook-cell", language: "taxiql-stubs" },
+            { scheme: "vscode-notebook-cell", language: "taxi-diagram" },
          ],
          synchronize: {
             // Notify the server about file changes to .taxi files contained in the workspace

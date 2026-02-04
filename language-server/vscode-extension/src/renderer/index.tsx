@@ -519,8 +519,11 @@ const TaxiQLResults: React.FC<TaxiQLResultsProps> = ({ outputItem }) => {
 const QueryPlanViewer: React.FC<{ outputItem: OutputItem }> = ({ outputItem }) => {
    const data = outputItem.json();
 
-   // The response structure is { diagramData: { diagramData: {...}, steps: [...], ... } }
-   const queryPlanData = data.diagramData?.diagramData;
+   // The response structure can be:
+   // - { diagramData: { diagramData: {...}, steps: [...], ... } } (nested)
+   // - { diagramData: { queryId, nodes, links, ... } } (flat)
+   // Handle both cases with a fallback
+   const queryPlanData = data.diagramData?.diagramData || data.diagramData;
 
    console.log('QueryPlanViewer data:', data);
    console.log('Extracted queryPlanData:', queryPlanData);

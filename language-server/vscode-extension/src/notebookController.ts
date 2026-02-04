@@ -5,8 +5,10 @@ import {
    StubQueryResponse,
    OperationStub,
    QueryPlanResponse,
+   DiagramDataRequest,
    TAXIQL_EXECUTE_WITH_STUBS,
    TAXIQL_GENERATE_QUERY_PLAN,
+   TAXIQL_GET_DIAGRAM_DATA,
 } from "./notebookProtocol";
 
 /**
@@ -16,7 +18,7 @@ export class TaxiQLNotebookController {
    readonly controllerId = "taxiql-notebook-controller";
    readonly notebookType = "taxiql-notebook";
    readonly label = "TaxiQL";
-   readonly supportedLanguages = ["taxi", "taxiql-stubs", "markdown"];
+   readonly supportedLanguages = ["taxi", "taxiql-stubs", "taxi-diagram", "markdown"];
 
    private readonly controller: vscode.NotebookController;
    private readonly outputChannel: vscode.OutputChannel;
@@ -64,6 +66,12 @@ export class TaxiQLNotebookController {
          // Skip markdown cells
          if (cell.document.languageId === "markdown") {
             execution.end(true, Date.now());
+            return;
+         }
+
+         // Handle taxi-diagram cells
+         if (cell.document.languageId === "taxi-diagram") {
+            await this.executeTaxiDiagramCell(cell, execution);
             return;
          }
 
@@ -226,6 +234,84 @@ export class TaxiQLNotebookController {
          projectRoot,
          notebookPath,
       };
+   }
+
+   /**
+    * Execute a taxi-diagram cell
+    */
+   private async executeTaxiDiagramCell(
+      cell: vscode.NotebookCell,
+      execution: vscode.NotebookCellExecution
+   ): Promise<void> {
+      const content = cell.document.getText();
+
+      // Parse the cell content - each line is a type/service name
+      const names = content
+         .split('\n')
+         .map(line => line.trim())
+         .filter(line => line && !line.startsWith('#')); // Filter out empty lines and comments
+
+      console.log(`[NotebookController] Executing taxi-diagram cell with ${names.length} elements:`, names);
+
+      if (names.length === 0) {
+         execution.replaceOutput([
+            new vscode.NotebookCellOutput([
+               vscode.NotebookCellOutputItem.text(
+                  'No diagram elements specified. Add type or service names (one per line).',
+                  'text/plain'
+               ),
+            ]),
+         ]);
+         execution.end(true, Date.now());
+         return;
+      }
+
+      try {
+         // Get workspace folder as project root
+         const workspaceFolders = vscode.workspace.workspaceFolders;
+         const projectRoot = workspaceFolders?.[0]?.uri.fsPath || "";
+
+         if (!this.languageClient) {
+            throw new Error('Language client not initialized');
+         }
+
+         const request: DiagramDataRequest = {
+            names,
+            projectRoot
+         };
+
+         const response = await this.languageClient.sendRequest<QueryPlanResponse>(
+            TAXIQL_GET_DIAGRAM_DATA,
+            request
+         );
+
+         console.log('[NotebookController] Received diagram data:', response);
+
+         // Output the diagram data with the query plan mime type
+         // The notebook renderer will handle displaying it
+         execution.replaceOutput([
+            new vscode.NotebookCellOutput([
+               vscode.NotebookCellOutputItem.json(
+                  response,
+                  "application/vnd.taxi.queryplan+json"
+               ),
+            ]),
+         ]);
+         execution.end(true, Date.now());
+
+      } catch (error) {
+         console.error('[NotebookController] Error executing taxi-diagram cell:', error);
+
+         execution.replaceOutput([
+            new vscode.NotebookCellOutput([
+               vscode.NotebookCellOutputItem.error({
+                  name: "Diagram Error",
+                  message: error instanceof Error ? error.message : String(error),
+               }),
+            ]),
+         ]);
+         execution.end(false, Date.now());
+      }
    }
 
    /**

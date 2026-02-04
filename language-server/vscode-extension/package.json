@@ -18,6 +18,7 @@
       "onLanguage:taxi",
       "onLanguage:taxiql",
       "onLanguage:taxiql-stubs",
+      "onLanguage:taxi-diagram",
       "onNotebook:taxiql-notebook"
    ],
    "main": "./out/extension.js",
@@ -56,6 +57,12 @@
             "id": "taxiql-stubs",
             "aliases": [
                "TaxiQL Stubs"
+            ]
+         },
+         {
+            "id": "taxi-diagram",
+            "aliases": [
+               "Taxi Diagram"
             ]
          }
       ],
