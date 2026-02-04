@@ -234,6 +234,9 @@ async function startPlugin(
          clientOptions
       );
 
+      // Store globally for proper cleanup on deactivation
+      globalLanguageClient = languageClient;
+
       // Start the client and register for notifications
       console.log("Starting language client...");
       try {
@@ -391,9 +394,20 @@ interface NotebookComponents {
 // Store the notebook components globally so we can connect them to the language client
 let notebookComponents: NotebookComponents | null = null;
 
+// Store language client globally for proper cleanup
+let globalLanguageClient: LanguageClient | null = null;
+
 // this method is called when your extension is deactivated
-export function deactivate() {
-   console.log("taxi-language-server is deactivated");
+export async function deactivate() {
+   console.log("taxi-language-server is deactivating");
+   if (globalLanguageClient) {
+      try {
+         await globalLanguageClient.stop();
+         console.log("Language client stopped successfully");
+      } catch (error) {
+         console.error("Error stopping language client:", error);
+      }
+   }
 }
 
 /**
