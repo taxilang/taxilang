@@ -17,7 +17,6 @@ import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.generators.Logger
 import lang.taxi.generators.NamingUtils.replaceIllegalCharacters
 import lang.taxi.generators.openApi.OperationIdProvider
-import lang.taxi.services.OperationScope
 import lang.taxi.services.Service
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.*

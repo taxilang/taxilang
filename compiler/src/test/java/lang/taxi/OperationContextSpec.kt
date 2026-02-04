@@ -198,6 +198,16 @@ fun String.validated(
    return Compiler(this, config = config.copy(linterRuleConfiguration = linterRules)).validate()
 }
 
+fun List<String>.validated(
+   config: CompilerConfig = TestCompilerOptions.config,
+   linterRules: List<LinterRuleConfiguration> = emptyList()
+): List<CompilationMessage> {
+   return Compiler(
+      this.map { CharStreams.fromString(it) },
+      config = config.copy(linterRuleConfiguration = linterRules)
+   ).validate()
+}
+
 fun List<String>.compiled(
    config: CompilerConfig = TestCompilerOptions.config,
    linterRules: List<LinterRuleConfiguration> = emptyList()

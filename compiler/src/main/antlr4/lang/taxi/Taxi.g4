@@ -366,7 +366,7 @@ typeArguments: '<' typeReference (',' typeReference)* '>';
 
 // A "lenient" enum will match on case insensitive values
 enumDeclaration
-    :    typeDoc? annotation* lenientKeyword? 'enum' qualifiedName typeArguments?
+    :    typeDoc? annotation* lenientKeyword? 'enum' identifier typeArguments?
          ((K_Inherits enumInheritedType) | ('{' enumConstants? '}'))
     ;
 
@@ -559,7 +559,7 @@ columnDefinition : 'column' '(' columnIndex ')' ;
 // rather than permitting void return types.
 // This is because in a mapping declaration, functions really only have purpose if
 // they return things.
-functionDeclaration: typeDoc? K_Declare? (functionModifiers)* 'function' typeArguments? qualifiedName '(' operationParameterList? ')' ':' nullableTypeReference functionExpression?;
+functionDeclaration: typeDoc? K_Declare? (functionModifiers)* 'function' typeArguments? identifier '(' operationParameterList? ')' ':' nullableTypeReference functionExpression?;
 
 // 26-Sep-24: Adding function expressions.
 // This is because expression types have started to hit bounds of complexity - especially
@@ -873,6 +873,10 @@ K_Partial: 'partial';
 IdentifierToken
     :   Letter LetterOrDigit*
     | '`' ~('`')+ '`'
+          {
+            // strip backticks
+            setText(getText().substring(1, getText().length() - 1));
+          }
     ;
 
 

@@ -44,14 +44,14 @@ import kotlin.collections.set
 
 class TokenProcessor(
    val tokens: Tokens,
-   importSources: List<TaxiDocument> = emptyList(),
+   private val importSources: List<TaxiDocument> = emptyList(),
    collectImports: Boolean = true,
    val typeChecker: TypeChecker,
    private val linter: Linter
 ) {
 
    companion object {
-      @Deprecated("use String.unescaped() extension function")
+      @Deprecated("Unescaping reserved words is handled at the grammar level now, and is not neccessary")
       fun unescape(text: String): String = text.unescaped()
 
    }
@@ -76,6 +76,7 @@ class TokenProcessor(
    private val policies = mutableListOf<Policy>()
    private val functions = mutableListOf<Function>()
    private val annotations = mutableListOf<Annotation>()
+   @Deprecated("views are deprecated")
    private val views = mutableListOf<View>()
 
    val errors = mutableListOf<CompilationError>()
@@ -102,17 +103,20 @@ class TokenProcessor(
 
    fun buildTaxiDocument(): Pair<List<CompilationError>, TaxiDocument> {
       compile()
-      // TODO: Unsure if including the imported types here is a good iddea or not.
       val types = typeSystem.typeList(includeImportedTypes = true).toSet()
+
+      // MP: 27-Jan-26: Previously we did not include imported services / functions / policies etc
+      // here. This was likely wrong, and broke things when we started fixing duplicate imports.
+      // However, this may have knock-on effects (targeted for Taxi 1.71)
       return errors to TaxiDocument(
-         types,
-         services.toSet(),
-         policies.toSet(),
-         functions.toSet(),
-         annotations.toSet(),
-         views.toSet(),
-         queries.toSet(),
-         topLevelExpressions.toSet()
+         types = types,
+         services = (importSources.flatMap { it.services } + services).toSet(),
+         policies = (importSources.flatMap { it.policies } + policies).toSet(),
+         functions = (importSources.flatMap { it.functions } + functions).toSet(),
+         annotations = (importSources.flatMap { it.annotations } + annotations).toSet(),
+         views = (importSources.flatMap { it.views } + views).toSet(),
+         queries = (importSources.flatMap { it.queries } + queries).toSet(),
+         expressions = topLevelExpressions.toSet(),
       )
    }
 
@@ -136,7 +140,7 @@ class TokenProcessor(
    }
 
    fun findDeclaredServiceNames(): List<QualifiedName> {
-      return tokens.unparsedServices.map { (name, _) ->
+      return tokens.unparsedServices.map { (name, _, _) ->
          QualifiedName.from(name)
       }
    }
@@ -145,11 +149,9 @@ class TokenProcessor(
       createEmptyTypes()
 
       // We need to check all the ObjectTypes, to see if they declare any inline type aliases
-      val inlineTypeAliases = tokens.unparsedTypes.toList().filter { (_, tokenPair) ->
-         val (_, ctx) = tokenPair
+      val inlineTypeAliases = tokens.unparsedTypes.filter { (_, _, ctx) ->
          ctx is TypeDeclarationContext
-      }.flatMap { (_, tokenPair) ->
-         val (namespace, ctx) = tokenPair
+      }.flatMap { (_, namespace, ctx) ->
          val typeCtx = ctx as TypeDeclarationContext
          val typeAliasNames = typeCtx.typeBody()?.typeMemberDeclaration()
             ?.filter { memberDeclaration ->
@@ -243,16 +245,16 @@ class TokenProcessor(
       tokensCurrentlyCompiling.add(named.qualifiedName)
       val result = when {
          named is EnumType -> {
-            val token = tokens.unparsedTypes[named.qualifiedName]
+            val token = tokens.unparsedTypes.find { (name, _, _) -> name == named.qualifiedName }
                ?: return context.createCompilationError("An internal error occurred: Cannot compile requsted token ${named.qualifiedName} as it was not found")
-            compileEnum(namespace, named.qualifiedName, token.second as EnumDeclarationContext)
+            compileEnum(namespace, named.qualifiedName, token.third as EnumDeclarationContext)
                .map { it as T }
          }
 
          named is Type -> {
-            val token = tokens.unparsedTypes[named.qualifiedName]
+            val token = tokens.unparsedTypes.find { (name, _, _) -> name == named.qualifiedName }
                ?: return context.createCompilationError("An internal error occurred: Cannot compile requsted token ${named.qualifiedName} as it was not found")
-            compileType(namespace, named.qualifiedName, token.second as TypeDeclarationContext)
+            compileType(namespace, named.qualifiedName, token.third as TypeDeclarationContext)
                .map { it as T }
          }
 
@@ -307,9 +309,8 @@ class TokenProcessor(
             }
       }
 
-      this.tokens.namedQueries.forEach { (namespace, namedQueryContext) ->
-         val queryName = namedQueryContext.queryName().identifier().text
-         val queryQualifiedName = QualifiedName(namespace, queryName)
+      this.tokens.namedQueries.forEach { (qualifiedName, namespace, namedQueryContext) ->
+         val queryQualifiedName = QualifiedName.from(qualifiedName)
          val annotations = collateAnnotations(namedQueryContext.annotation())
          val docs = parseTypeDoc(namedQueryContext.typeDoc())
          val parametersOrErrors =
@@ -399,10 +400,10 @@ class TokenProcessor(
 
    fun findDefinition(qualifiedName: String): ParserRuleContext? {
       createEmptyTypes()
-      val definitions = this.tokens.unparsedTypes.filter { it.key == qualifiedName }
+      val definitions = this.tokens.unparsedTypes.filter { (name, _, _) -> name == qualifiedName }
       return when {
          definitions.isEmpty() -> null
-         definitions.size == 1 -> definitions.values.first().second
+         definitions.size == 1 -> definitions.first().third
          else -> {
             error("Found multiple definitions for $qualifiedName - this shouldn't happen")
          }
@@ -413,10 +414,10 @@ class TokenProcessor(
       if (createEmptyTypesPerformed) {
          return
       }
-      tokens.unparsedFunctions.forEach { tokenName, (_, token) ->
+      tokens.unparsedFunctions.forEach { (tokenName, _, token) ->
          typeSystem.register(Function.undefined(tokenName))
       }
-      tokens.unparsedTypes.forEach { tokenName, (_, token) ->
+      tokens.unparsedTypes.forEach { (tokenName, _, token) ->
          when (token) {
             is AnnotationTypeDeclarationContext -> typeSystem.register(AnnotationType.undefined(tokenName))
             is EnumDeclarationContext -> typeSystem.register(EnumType.undefined(tokenName))
@@ -424,9 +425,8 @@ class TokenProcessor(
             is TypeAliasDeclarationContext -> typeSystem.register(TypeAlias.undefined(tokenName))
          }
       }
-      val serviceDefinitions = tokens.unparsedServices.map { entry ->
-         val qualifiedName = entry.key
-         val serviceBody = entry.value.second.serviceBody()
+      val serviceDefinitions = tokens.unparsedServices.map { (qualifiedName, _, context) ->
+         val serviceBody = context.serviceBody()
          val operations = serviceBody?.serviceBodyMember()
             ?.mapNotNull { it.serviceOperationDeclaration() }
             ?.map { operationDeclaration -> operationDeclaration.operationSignature().identifier().text }
@@ -440,25 +440,25 @@ class TokenProcessor(
    private fun compileTokens() {
       val enumUnparsedTypes = tokens
          .unparsedTypes
-         .filter { it.value.second is EnumDeclarationContext }
+         .filter { (_, _, context) -> context is EnumDeclarationContext }
 
       val nonEnumParsedTypes = tokens
          .unparsedTypes
-         .filter { it.value.second !is EnumDeclarationContext }
+         .filter { (_, _, context) -> context !is EnumDeclarationContext }
 
       enumUnparsedTypes
          .plus(nonEnumParsedTypes)
-         .forEach { (tokenName, namespaceTokenPair) ->
-            val (_, token) = namespaceTokenPair
+         .forEach { (tokenName, _, token) ->
             compileToken(tokenName, token)
          }
    }
 
    private fun compileToken(tokenName: String, token: ParserRuleContext) {
-      if (tokens.unparsedInlineTypes.containsKey(tokenName)) {
+      val inlineTypeEntry = tokens.unparsedInlineTypes.find { (name, _) -> name == tokenName }
+      if (inlineTypeEntry != null) {
          // The requested type is defined inline.
          // Rather than compile the requested type, compile the type that declares it.
-         val inlineTypeDeclarationType = tokens.unparsedInlineTypes.get(tokenName)!!
+         val inlineTypeDeclarationType = inlineTypeEntry.second
          if (inlineTypeDeclarationType == tokenName) {
             errors.add(
                CompilationError(
@@ -471,7 +471,7 @@ class TokenProcessor(
          compileToken(inlineTypeDeclarationType, token)
          return
       }
-      val (namespace, tokenRule) = tokens.unparsedTypes[tokenName]!!
+      val (_, namespace, tokenRule) = tokens.unparsedTypes.find { (name, _, _) -> name == tokenName }!!
       if (typeSystem.isDefined(tokenName) && typeSystem.getType(tokenName) is TypeAlias) {
          // As type aliases can be defined inline, it's perfectly acceptable for
          // this to already exist
@@ -1757,7 +1757,7 @@ class TokenProcessor(
    ): Either<List<CompilationError>, FormatsAndZoneOffset?> {
 
       val formatAnnotations =
-         annotations.filter { it.type?.qualifiedName == BuiltIns.FormatAnnotation.name.fullyQualifiedName }
+         annotations.filter { it.type?.qualifiedName == BuiltInTypes.FormatAnnotation.name.fullyQualifiedName }
       if (formatAnnotations.isEmpty()) {
          return (null as? FormatsAndZoneOffset?).right()
       }
@@ -2041,7 +2041,7 @@ class TokenProcessor(
          symbols.map { symbol ->
             if (symbol.value is ObjectType && !symbol.value.isDefined && compileIfRequired) {
                val typeName = symbol.value.toQualifiedName()
-               val uncompiledToken = tokens.unparsedTypes[typeName.fullyQualifiedName]
+               val uncompiledToken = tokens.unparsedTypes.find { (name, _, _) -> name == typeName.fullyQualifiedName }
                val tokenToCompile = when {
                   uncompiledToken == null -> {
                      listOf(
@@ -2053,18 +2053,18 @@ class TokenProcessor(
                         .left()
                   }
 
-                  uncompiledToken.second !is TypeDeclarationContext -> {
+                  uncompiledToken.third !is TypeDeclarationContext -> {
                      listOf(
                         CompilationError(
                            context.toCompilationUnit(),
-                           "An internal error occurred: Cannot compile $tokenName as it's token is not of the expected type - expected a TypeDeclarationContext, but got ${uncompiledToken.second::class.simpleName}"
+                           "An internal error occurred: Cannot compile $tokenName as it's token is not of the expected type - expected a TypeDeclarationContext, but got ${uncompiledToken.third::class.simpleName}"
                         )
                      )
                         .left()
                   }
 
                   else -> {
-                     (uncompiledToken.second as TypeDeclarationContext).right()
+                     (uncompiledToken.third as TypeDeclarationContext).right()
                   }
                }
 
@@ -2106,8 +2106,9 @@ class TokenProcessor(
          context,
          symbolKind
       ) { qualifiedName ->
-         if (tokens.unparsedFunctions.contains(qualifiedName)) {
-            compileFunction(tokens.unparsedFunctions[qualifiedName]!!, qualifiedName)
+         val functionEntry = tokens.unparsedFunctions.find { (name, _, _) -> name == qualifiedName }
+         if (functionEntry != null) {
+            compileFunction(Pair(functionEntry.second, functionEntry.third), qualifiedName)
          } else if (tokens.containsUnparsedType(qualifiedName, SymbolKind.TYPE)) {
             compileToken(qualifiedName, context)
             typeSystem.getTypeOrError(qualifiedName, context).wrapErrorsInList()
@@ -2122,7 +2123,10 @@ class TokenProcessor(
 
    private fun getOrCompileService(qualifiedName: String): Either<List<CompilationError>, Service> {
       return services.firstOrNull { it.qualifiedName == qualifiedName }?.right()
-         ?: compileService(qualifiedName, tokens.unparsedServices[qualifiedName]!!)
+         ?: run {
+            val (_, namespace, context) = tokens.unparsedServices.find { (name, _, _) -> name == qualifiedName }!!
+            compileService(qualifiedName, Pair(namespace, context))
+         }
    }
    /**
     * Given a service + operation call reference in the form of
@@ -2487,8 +2491,8 @@ class TokenProcessor(
    }
 
    private fun compileFunctions() {
-      val compiledFunctions = this.tokens.unparsedFunctions.map { (qualifiedName, namespaceAndParserContext) ->
-         compileFunction(namespaceAndParserContext, qualifiedName)
+      val compiledFunctions = this.tokens.unparsedFunctions.map { (qualifiedName, namespace, context) ->
+         compileFunction(Pair(namespace, context), qualifiedName)
       }.invertEitherList()
          .flattenErrors()
          .collectErrors(errors)
@@ -2594,7 +2598,7 @@ class TokenProcessor(
 
 
    private fun compileServices() {
-      val services = this.tokens.unparsedServices.map { (qualifiedName, serviceTokenPair) ->
+      val services = this.tokens.unparsedServices.map { (qualifiedName, _, _) ->
          getOrCompileService(qualifiedName)
       }
 
@@ -2898,9 +2902,7 @@ class TokenProcessor(
 
    private fun compilePolicies() {
       val policyCompiler = PolicyCompiler(this)
-      this.tokens.unparsedPolicies.map { (name, namespaceTokenPair) ->
-         val (namespace, token) = namespaceTokenPair
-
+      this.tokens.unparsedPolicies.map { (name, namespace, token) ->
          parseType(namespace, token.typeReference()).flatMap { targetType ->
             policyCompiler.compilerPolicy(name, token, targetType)
          }

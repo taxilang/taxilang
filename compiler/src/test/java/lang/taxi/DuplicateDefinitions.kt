@@ -8,7 +8,6 @@ import org.junit.jupiter.api.assertThrows
 import java.nio.file.Paths
 
 class DuplicateDefinitions {
-   @Disabled("Need to make this work consistently. See TokenCollator:collectDuplicateTypes for detail")
    @Test
    fun `Duplicate type definitions`() {
       val root = Resources.getResource("duplicate-definitions").toURI()
