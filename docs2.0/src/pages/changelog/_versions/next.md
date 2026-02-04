@@ -1,11 +1,11 @@
 ---
 version: next
 aggregateVersion: 'next'
-releaseDate: 2026-01-30
+releaseDate: 2026-02-04
 title: next release notes
 ---
 ## next
-2026-01-30
+2026-02-04
 
 ### Bug Fixes
 
@@ -16,6 +16,7 @@ title: next release notes
 ### Features
 
 * **compiler:** restore duplicate type and service error detection ([b8015d9](https://gitlab.com/taxi-lang/taxi-lang/commit/b8015d92c273981fb9e5a98ca5f4edf8c1ea723f))
+* **language-server:** add context help and diagnostics for taxi.conf files ([1de0eab](https://gitlab.com/taxi-lang/taxi-lang/commit/1de0eaba91ecebe29027caeed3369d55c601e643))
 
 
 
