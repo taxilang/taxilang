@@ -136,6 +136,28 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    LanguageClientAware {
    constructor(compilerService: TaxiCompilerService) : this(LspServicesConfig(compilerService = compilerService))
 
+   companion object {
+      /**
+       * HOCON configuration files that receive language server support
+       * (completions, diagnostics, validation)
+       */
+      private val SUPPORTED_HOCON_FILES = setOf(
+         "workspace.conf",
+         "taxi.conf",
+         "connections.conf",
+         "services.conf",
+         "env.conf",
+         "auth.conf"
+      )
+
+      /**
+       * Check if a URI corresponds to a supported HOCON configuration file
+       */
+      private fun isSupportedHoconFile(uri: String): Boolean {
+         return SUPPORTED_HOCON_FILES.any { uri.endsWith(it) }
+      }
+   }
+
    val lastCompilationResult: CompilationResult
       get() {
          return this.compilerService.getOrComputeLastCompilationResult()
@@ -153,9 +175,13 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    private val lintingService = services.lintingService
    private val signatureHelpService = services.signatureHelpService
    private val semanticTokenService = services.semanticTokenService
+   private val taxiConfService = services.taxiConfService
    private lateinit var client: LanguageClient
    private var progressUpdatesService: ProgressUpdatesService? = null
    private var rootUri: String? = null
+
+   // Store taxi.conf file contents for diagnostics
+   private val taxiConfContents = mutableMapOf<String, String>()
 
    private var initialized: Boolean = false
    private var connected: Boolean = false
@@ -190,6 +216,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
 
    private var compilerErrorDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
    private var linterDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
+   private var taxiConfDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
 
    fun forceCompilationNow(): CompilationResult {
       return compilerService.compile()
@@ -234,8 +261,11 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    override fun completion(position: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
-      if (position.textDocument.uri.endsWith(".conf")) {
-         return CompletableFuture.completedFuture(Either.forLeft(mutableListOf()))
+      if (isSupportedHoconFile(position.textDocument.uri)) {
+         // Handle HOCON config file completions
+         val content = taxiConfContents[position.textDocument.uri] ?: ""
+         val completionList = taxiConfService.getCompletions(position.textDocument.uri, content, position)
+         return CompletableFuture.completedFuture(Either.forRight(completionList))
       }
       val lastCompilationResult =
          compilerService.getOrComputeLastCompilationResult(uriToAssertIsPreset = position.textDocument.uri)
@@ -253,7 +283,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    override fun definition(params: DefinitionParams): CompletableFuture<Either<MutableList<out Location>, MutableList<out LocationLink>>> {
-      if (params.textDocument.uri.endsWith(".conf")) {
+      if (isSupportedHoconFile(params.textDocument.uri)) {
          return CompletableFuture.completedFuture(Either.forLeft(mutableListOf()))
       }
       val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
@@ -261,7 +291,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    override fun hover(params: HoverParams): CompletableFuture<Hover> {
-      if (params.textDocument.uri.endsWith(".conf")) {
+      if (isSupportedHoconFile(params.textDocument.uri)) {
          return CompletableFuture.completedFuture(Hover(MarkupContent("markdown", "")))
       }
       val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
@@ -287,7 +317,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    override fun formatting(params: DocumentFormattingParams): CompletableFuture<MutableList<out TextEdit>> {
-      if (params.textDocument.uri.endsWith(".conf")) {
+      if (isSupportedHoconFile(params.textDocument.uri)) {
          return CompletableFuture.completedFuture(mutableListOf())
       }
       val content = compilerService.source(params.textDocument.uri)
@@ -295,6 +325,14 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    override fun didOpen(params: DidOpenTextDocumentParams) {
+      // Handle supported HOCON config files separately
+      if (isSupportedHoconFile(params.textDocument.uri)) {
+         taxiConfContents[params.textDocument.uri] = params.textDocument.text
+         computeTaxiConfDiagnostics(params.textDocument.uri, params.textDocument.text)
+         publishDiagnosticMessages()
+         return
+      }
+
       computeLinterMessages(params.textDocument.uri)
       publishDiagnosticMessages()
 
@@ -315,6 +353,12 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       } catch (exception: Exception) {
          mapOf(normalizedUri to emptyList()) // Provide a fallback or empty result
       }
+   }
+
+   private fun computeTaxiConfDiagnostics(documentUri: String, content: String) {
+      val normalizedUri = SourceNames.normalize(documentUri)
+      val diagnostics = taxiConfService.getDiagnostics(normalizedUri, content)
+      this.taxiConfDiagnostics = mapOf(normalizedUri to diagnostics)
    }
 
 
@@ -338,6 +382,11 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    override fun didClose(params: DidCloseTextDocumentParams) {
+      // Clean up HOCON config file caches
+      if (isSupportedHoconFile(params.textDocument.uri)) {
+         taxiConfContents.remove(params.textDocument.uri)
+         taxiConfService.clearCache(params.textDocument.uri)
+      }
    }
 
    override fun didChange(params: DidChangeTextDocumentParams) {
@@ -352,8 +401,11 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       val sourceName = params.textDocument.uri
 
 
-      if (sourceName.endsWith("taxi.conf")) {
-         // SKip it, we'll wait for a save.
+      if (isSupportedHoconFile(sourceName)) {
+         // Store the content and compute diagnostics in real-time for supported HOCON files
+         taxiConfContents[sourceName] = content
+         computeTaxiConfDiagnostics(sourceName, content)
+         publishDiagnosticMessages()
       } else {
          triggerCompilation(params.textDocument, content)
       }
@@ -412,12 +464,14 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    private fun publishDiagnosticMessages() {
-      val diagnosticMessages = (compilerErrorDiagnostics.keys + linterDiagnostics.keys).map { uri ->
+      val allKeys = compilerErrorDiagnostics.keys + linterDiagnostics.keys + taxiConfDiagnostics.keys
+      val diagnosticMessages = allKeys.map { uri ->
          val normalisedUrl = SourceNames.normalize(uri)
          normalisedUrl to (compilerErrorDiagnostics.getOrDefault(
             normalisedUrl,
             emptyList()
-         ) + linterDiagnostics.getOrDefault(normalisedUrl, emptyList()))
+         ) + linterDiagnostics.getOrDefault(normalisedUrl, emptyList())
+           + taxiConfDiagnostics.getOrDefault(normalisedUrl, emptyList()))
       };
       publishDiagnosticMessages(diagnosticMessages)
 
