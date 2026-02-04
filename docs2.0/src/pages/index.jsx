@@ -8,6 +8,7 @@ import {OrbitalLogoMark} from "@/components/icons/orbital-logo";
 import {TaxiLogo} from "@/components/icons/taxi-icon-yellow";
 import {microservicesCodeSnippets, publishYourApiCodeSnippets} from "@/components/home/code-snippets";
 import {EmbedAndQuery} from "@/components/home/EmbedAndQuery";
+import {IntegrationComparison} from "@/components/home/IntegrationComparison";
 
 const faqs = [
   {
@@ -17,7 +18,7 @@ const faqs = [
   {
     question: 'How does this compare to GraphQL?',
     answer: [
-      "Taxi provides many of the benefits of GraphQL—data federation and custom response schemas—without requiring resolvers or a single global schema. It integrates with your existing tech stack and supports more than just HTTP. TaxiQL works across all data sources and integration patterns, including Kafka streams, S3 buckets, API orchestration and batch workloads."
+      "Taxi provides many of the benefits of GraphQL - data federation and custom response schemas - without requiring resolvers or a single global schema. It integrates with your existing tech stack and supports more than just HTTP. TaxiQL works across all data sources and integration patterns, including Kafka streams, S3 buckets, API orchestration and batch workloads."
     ],
     learnMore: '/docs#taxi-vs-graph-ql'
   },
@@ -42,27 +43,25 @@ function HeroSection() {
         <div className='font-brand dark:text-white mx-auto max-w-8xl flex items-center gap-8 flex-col my-16 relative'>
           <TaxiLogo className={'h-[100px]'} />
           <h2 className='font-light lg:text-6xl text-4xl leading-tight text-center'>
-            A language for APIs, data<br />and connecting it all together.
+            Connect all your APIs & services <br />without integration code.
           </h2>
 
-          <p className='lg:text-2xl font-light max-w-4xl text-lg text-center'>
-            Describe how your data and services relate across your entire ecosystem - <br />
-            from APIs and databases to message queues and beyond.
-          </p>
-          <p className='lg:text-2xl font-light text-lg text-center'>
-            Use TaxiQL to fetch data - without resolvers or glue code - and adapts as things change.
+          <p className='lg:text-3xl lg:leading-10 font-light max-w-4xl text-lg text-center'>
+            Tag your APIs.<br />
+            Query for data using TaxiQL.<br />
+            Taxi handles the orchestration.
           </p>
           <div className='sm:mt-10 mt-8 mb-3 flex justify-center gap-6 text-base md:text-lg flex-wrap'>
-            <GetStartedButton/>
-            <LinkButton styles="hidden md:flex" link='https://playground.taxilang.org/' label='Try the playground'/>
+            <GetStartedButton link='https://playground.taxilang.org/' label='Try the playground'/>
+            <LinkButton styles="hidden md:flex" link='/docs' label='Read the docs'/>
           </div>
-          <div className={'flex items-center gap-4'}>
-            <div>Developed by</div>
-            <a href='https://orbitalhq.com'>
-              <OrbitalLogoMark className="hidden h-7 w-auto fill-slate-700 dark:fill-sky-100 lg:block"/>
-            </a>
+          {/*<div className={'flex items-center gap-4'}>*/}
+          {/*  <div>Developed by</div>*/}
+          {/*  <a href='https://orbitalhq.com'>*/}
+          {/*    <OrbitalLogoMark className="hidden h-7 w-auto fill-slate-700 dark:fill-sky-100 lg:block"/>*/}
+          {/*  </a>*/}
 
-          </div>
+          {/*</div>*/}
         </div>
       </div>
     </header>
@@ -72,7 +71,8 @@ function HeroSection() {
 export default function Home(
   {
     publishYourApiHighlightedSnippets,
-    microserviceHighlightedSnippets
+    microserviceHighlightedSnippets,
+    highlightedJsCode
   }
 ) {
   return (
@@ -81,10 +81,14 @@ export default function Home(
       <div className='overflow-hidden dark:bg-brand-background'>
         <HeroSection/>
       </div>
+      <div className='overflow-hidden dark:bg-brand-background'>
+        <IntegrationComparison highlightedJsCode={highlightedJsCode} />
+      </div>
       <div className='overflow-hidden'>
         <EmbedAndQuery microservicesCodeSnippets={microserviceHighlightedSnippets} publishYourApiHighlightedSnippets={publishYourApiHighlightedSnippets} />
         {/*<FeaturesSection/>*/}
       </div>
+
       <div className="relative z-10">
         <FAQ faqs={faqs}/>
       </div>
@@ -96,10 +100,36 @@ export default function Home(
 export function getStaticProps() {
   let {highlightCodeSnippets} = require('@/components/Guides/Snippets');
 
+  const javascriptCodeSnippet = `// Without Taxi: The integration code you actually write
+async function getOrdersWithDetails(customerId) {
+  const customer = await customerApi.getCustomer(customerId);
+  const orders = await orderApi.getOrdersByCustomer(customerId);
+
+  const enrichedOrders = await Promise.all(
+    orders.map(async (order) => {
+      const [shipping, payment] = await Promise.all([
+        shippingApi.getTracking(order.trackingId).catch(() => null),
+        paymentApi.getPayment(order.paymentId).catch(() => null),
+      ]);
+
+      return {
+        orderId: order.id,
+        total: order.total,
+        customerName: customer.name,
+        shippingStatus: shipping?.status ?? 'unknown',
+        paymentMethod: payment?.method,
+      };
+    })
+  );
+
+  return enrichedOrders;
+}`;
+
   return {
     props: {
       microserviceHighlightedSnippets: highlightCodeSnippets(microservicesCodeSnippets),
       publishYourApiHighlightedSnippets: highlightCodeSnippets(publishYourApiCodeSnippets),
+      highlightedJsCode: highlightCodeSnippets({'js-integration': {name: 'integration.js', lang: 'javascript', code: javascriptCodeSnippet}})['js-integration'],
     }
   };
 }

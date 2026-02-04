@@ -873,6 +873,10 @@ K_Partial: 'partial';
 IdentifierToken
     :   Letter LetterOrDigit*
     | '`' ~('`')+ '`'
+          {
+            // strip backticks
+            setText(getText().substring(1, getText().length() - 1));
+          }
     ;
 
 
