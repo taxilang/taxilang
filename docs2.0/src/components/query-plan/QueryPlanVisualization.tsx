@@ -35,9 +35,10 @@ const nodeTypes = {
 interface QueryPlanVisualizationProps {
   queryPlanData: QueryPlanDiagramData | null;
   height?: number;
+  title?: string; // Optional title for the visualization
 }
 
-function QueryPlanFlowInternal({ queryPlanData, height = 400 }: QueryPlanVisualizationProps) {
+function QueryPlanFlowInternal({ queryPlanData, height = 400, title }: QueryPlanVisualizationProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [isFullScreen, setIsFullScreen] = useState(false)
@@ -176,7 +177,7 @@ function QueryPlanFlowInternal({ queryPlanData, height = 400 }: QueryPlanVisuali
     return { nodes: reactFlowNodes, edges: reactFlowEdges }
   }
 
-  const containerStyle = isFullScreen
+  const wrapperStyle = isFullScreen
     ? {
       position: 'fixed' as const,
       top: '1rem',
@@ -188,37 +189,56 @@ function QueryPlanFlowInternal({ queryPlanData, height = 400 }: QueryPlanVisuali
       borderRadius: '8px',
       boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
       color: 'black',
+      display: 'flex',
+      flexDirection: 'column' as const,
     }
     : {
       width: '100%',
-      height: `${height}px`,
-      color: 'black'
+      height: title ? `${height + 40}px` : `${height}px`, // Add space for title if present
+      color: 'black',
+      display: 'flex',
+      flexDirection: 'column' as const,
     }
 
+  const titleStyle: React.CSSProperties = {
+    padding: '8px 16px',
+    fontSize: '16px',
+    fontWeight: 600,
+    color: 'var(--vscode-foreground)',
+  }
+
+  const flowContainerStyle: React.CSSProperties = {
+    flex: 1,
+    minHeight: 0, // Important for flex child with overflow
+  }
+
   return (
-    <div style={containerStyle} className="query-plan-flow">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-      >
-        <Controls showInteractive={false}>
-          <ControlButton
-            onClick={() => setIsFullScreen(!isFullScreen)}
-            title={isFullScreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-          >
-            {isFullScreen ? (
-              <ArrowsPointingInIcon className="w-4 h-4 text-slate-700" />
-            ) : (
-              <ArrowsPointingOutIcon className="w-4 h-4 text-slate-700" />
-            )}
-          </ControlButton>
-        </Controls>
-        <Background color="#94a3b8" variant={BackgroundVariant.Dots} />
-      </ReactFlow>
+    <div style={wrapperStyle}>
+      {title && <div style={titleStyle}>{title}</div>}
+      <div style={flowContainerStyle} className="query-plan-flow">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+        >
+          <Controls showInteractive={false}>
+            <ControlButton
+              onClick={() => setIsFullScreen(!isFullScreen)}
+              title={isFullScreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            >
+              {isFullScreen ? (
+                <ArrowsPointingInIcon className="w-4 h-4 text-slate-700" />
+              ) : (
+                <ArrowsPointingOutIcon className="w-4 h-4 text-slate-700" />
+              )}
+            </ControlButton>
+          </Controls>
+          <Background color="#94a3b8" variant={BackgroundVariant.Dots} />
+        </ReactFlow>
+      </div>
     </div>
   )
 }

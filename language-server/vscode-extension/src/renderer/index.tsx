@@ -528,6 +528,14 @@ const QueryPlanViewer: React.FC<{ outputItem: OutputItem }> = ({ outputItem }) =
    console.log('QueryPlanViewer data:', data);
    console.log('Extracted queryPlanData:', queryPlanData);
 
+   // Detect if this is an actual query plan (has steps/messages) vs just a diagram
+   // Query plans come from generateQueryPlan endpoint and have additional metadata
+   // Diagrams come from getDiagramData endpoint and are just the diagram
+   const isQueryPlan = data.diagramData?.steps !== undefined ||
+                       data.diagramData?.queryExecutionMessages !== undefined;
+
+   const title = isQueryPlan ? "Query Plan" : undefined;
+
    return (
       <div style={{
          padding: '16px',
@@ -535,20 +543,12 @@ const QueryPlanViewer: React.FC<{ outputItem: OutputItem }> = ({ outputItem }) =
          fontSize: 'var(--vscode-font-size)',
          color: 'var(--vscode-foreground)',
       }}>
-         <h3 style={{
-            marginTop: 0,
-            marginBottom: '16px',
-            fontSize: '16px',
-            fontWeight: '600',
-         }}>
-            Query Plan
-         </h3>
-
-         {/* Query Plan Visualization */}
+         {/* Query Plan Visualization - title only shown for actual query plans */}
          {queryPlanData ? (
             <QueryPlanVisualization
                queryPlanData={queryPlanData as QueryPlanDiagramData}
                height={500}
+               title={title}
             />
          ) : (
             <div style={{
@@ -636,16 +636,13 @@ if (typeof window !== 'undefined') {
          console.log('Final queryPlanData:', queryPlanData);
          console.log('Has queryPlanData:', !!queryPlanData);
 
-         // Render the query plan visualization
+         // Render the query plan visualization without title (for taxi diagrams)
          root.render(
             <div style={{ width: '100%', height: '100%', padding: '20px' }}>
-               <h3 style={{ marginBottom: '16px', fontSize: '16px' }}>
-                  Taxi Diagram ({elements.length} {elements.length === 1 ? 'element' : 'elements'})
-               </h3>
                {queryPlanData ? (
                   <QueryPlanVisualization
                      queryPlanData={queryPlanData as QueryPlanDiagramData}
-                     height={window.innerHeight - 100}
+                     height={window.innerHeight - 60}
                   />
                ) : (
                   <div style={{

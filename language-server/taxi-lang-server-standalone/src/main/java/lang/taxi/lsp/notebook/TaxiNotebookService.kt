@@ -233,32 +233,147 @@ class TaxiNotebookService(
 
       return CompletableFuture.supplyAsync {
          try {
-            // TODO: Implement actual diagram generation
-            // For now, return a stub/empty response
-            log().info("Returning stub diagram data for: ${params.names}")
-
             val taxi = compilerService.lastSuccessfulCompilation()?.documentOrEmpty ?: TaxiDocument.empty()
             val schema = TaxiSchema(taxi, emptyList())
             val builder = QueryPlanDiagramBuilder(schema)
-            params.names.forEach { name ->
+
+            params.names
+
+               .filterNot { it.trim().startsWith("//") } // Exclude lines which are comments
+               .forEach { name ->
                try {
-                  when (val member = schema.getMember(name.fqn())) {
-                     is Type -> builder.addType(member)
-                     is Service -> builder.addService(member)
+                  if (name.endsWith("*")) {
+                     // Handle wildcard expansion
+                     expandWildcard(name.removeSuffix("*"), schema, builder)
+                  } else {
+                     // Handle regular name
+                     when (val member = schema.getMember(name.fqn())) {
+                        is Type -> builder.addType(member)
+                        is Service -> builder.addService(member)
+                     }
                   }
                } catch (e: Exception) {
-                  // TODO : How do we handle bad types?
+                  log().warn("Failed to add member: $name", e)
                }
             }
+
             val diagram = builder.build("")
-            // Return empty diagram data - the actual implementation will be provided later
-            QueryPlanResponse(
-               diagramData = diagram
-            )
+            QueryPlanResponse(diagramData = diagram)
          } catch (e: Exception) {
             log().error("Error generating diagram data", e)
             throw e
          }
+      }
+   }
+
+   /**
+    * Expands a wildcard name to include the member and all related types/services.
+    *
+    * For services: adds the service, all input types, and all return types from operations
+    * For types: adds the type, all services/operations that use it, and other types that reference it
+    *
+    * TODO: Consider using the query engine's schema graph to discover relationships
+    *       via inbound/outbound edges rather than iterating manually.
+    */
+   private fun expandWildcard(baseName: String, schema: TaxiSchema, builder: QueryPlanDiagramBuilder) {
+      try {
+         when (val member = schema.getMember(baseName.fqn())) {
+            is Service -> expandServiceWildcard(member, schema, builder)
+            is Type -> expandTypeWildcard(member, schema, builder)
+         }
+      } catch (e: Exception) {
+         log().warn("Failed to expand wildcard for: $baseName", e)
+      }
+   }
+
+   /**
+    * Expands a service wildcard by adding the service and all related types from its operations
+    */
+   private fun expandServiceWildcard(service: Service, schema: TaxiSchema, builder: QueryPlanDiagramBuilder) {
+      log().debug("Expanding service wildcard for: ${service.qualifiedName}")
+
+      // Add the service itself
+      builder.addService(service)
+
+      // Add all input and return types from operations
+      service.remoteOperations.forEach { operation ->
+         // Add return type
+         try {
+            val returnType = unwrapType(operation.returnType)
+            builder.addType(returnType)
+         } catch (e: Exception) {
+            log().debug("Failed to add return type for ${operation.name.fqn()}", e)
+         }
+
+         // Add all input parameter types
+         operation.parameters.forEach { param ->
+            try {
+               val paramType = unwrapType(param.type)
+               builder.addType(paramType)
+            } catch (e: Exception) {
+               log().debug("Failed to add parameter type for ${param.name}", e)
+            }
+         }
+      }
+   }
+
+   /**
+    * Expands a type wildcard by adding the type and all related services/operations and types
+    */
+   private fun expandTypeWildcard(type: Type, schema: TaxiSchema, builder: QueryPlanDiagramBuilder) {
+      log().debug("Expanding type wildcard for: ${type.qualifiedName}")
+
+      // Add the type itself
+      builder.addType(type)
+
+      // Add all services/operations that use this type
+      schema.services.forEach { service ->
+         var serviceUsesType = false
+
+         service.remoteOperations.forEach { operation ->
+            // Check if operation returns this type
+            if (unwrapType(operation.returnType) == type) {
+               serviceUsesType = true
+            }
+
+            // Check if operation takes this type as input
+            operation.parameters.forEach { param ->
+               if (unwrapType(param.type) == type) {
+                  serviceUsesType = true
+               }
+            }
+         }
+
+         if (serviceUsesType) {
+            builder.addService(service)
+         }
+      }
+
+      // Add types that reference this type in their fields
+      schema.types.forEach { otherType ->
+         if (otherType != type) {
+            otherType.attributes.forEach { (_, field) ->
+               try {
+                  val fieldType = unwrapType(schema.type(field.type))
+                  if (fieldType == type) {
+                     builder.addType(otherType)
+                  }
+               } catch (e: Exception) {
+                  // Field type might not be resolvable, skip it
+               }
+            }
+         }
+      }
+   }
+
+   /**
+    * Unwraps collection and stream types to get the underlying type
+    */
+   private fun unwrapType(type: Type): Type {
+      return when {
+         type.isStream && type.typeParameters.isNotEmpty() -> unwrapType(type.typeParameters[0])
+         type.isCollection && type.typeParameters.isNotEmpty() -> unwrapType(type.typeParameters[0])
+         else -> type
       }
    }
 }

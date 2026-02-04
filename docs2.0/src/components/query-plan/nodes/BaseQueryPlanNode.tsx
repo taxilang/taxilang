@@ -13,26 +13,79 @@ export function BaseQueryPlanNode({ node }: BaseQueryPlanNodeProps) {
   const theme = getNodeTheme(node.kind);
   const badgeLabel = node.badgeLabel || node.kind;
 
+  const nodeStyle: React.CSSProperties = {
+    background: 'white',
+    border: `2px solid ${theme.borderColor}`,
+    borderRadius: '6px',
+    minWidth: '200px',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+  };
+
+  const headerStyle: React.CSSProperties = {
+    position: 'relative',
+    padding: '8px 12px',
+    background: theme.backgroundColor,
+    borderBottom: `1px solid ${theme.borderColor}30`,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '8px',
+  };
+
+  const titleStyle: React.CSSProperties = {
+    fontWeight: 600,
+    fontSize: '14px',
+    color: theme.textColor,
+  };
+
+  const bodyStyle: React.CSSProperties = {
+    padding: '4px 0',
+  };
+
+  const memberStyle: React.CSSProperties = {
+    padding: '4px 12px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    fontSize: '13px',
+    position: 'relative',
+  };
+
+  const memberNameStyle: React.CSSProperties = {
+    color: '#374151',
+  };
+
+  const memberTypeStyle: React.CSSProperties = {
+    color: '#9ca3af',
+    fontSize: '12px',
+  };
+
   return (
-    <div className="query-plan-node">
-      <div className="query-plan-node-header">
+    <div style={nodeStyle}>
+      <div style={headerStyle}>
         <Handle type="target" position={Position.Left} id={`${node.id}-left`} />
-        <span className="query-plan-node-title">{node.title}</span>
+        <span style={titleStyle}>{node.title}</span>
         <NodeBadge label={badgeLabel} kind={node.kind} iconId={node.icon} />
         <Handle type="source" position={Position.Right} id={`${node.id}-right`} />
       </div>
       {node.members && node.members.length > 0 && (
-        <div className="query-plan-node-body">
-          {node.members.map((member) => (
-            <div key={member.handleId} className="query-plan-node-member">
+        <div style={bodyStyle}>
+          {node.members.map((member, index) => (
+            <div
+              key={member.handleId}
+              style={{
+                ...memberStyle,
+                borderBottom: index < node.members.length - 1 ? '1px dashed #e5e7eb' : 'none',
+              }}
+            >
               <Handle
                 type="target"
                 position={Position.Left}
                 id={`${member.handleId}-left`}
                 style={{ top: 'auto' }}
               />
-              <span className="member-name">{member.name}</span>
-              <span className="member-type">{member.typeName}</span>
+              <span style={memberNameStyle}>{member.name}</span>
+              <span style={memberTypeStyle}>{member.typeName}</span>
               <Handle
                 type="source"
                 position={Position.Right}
@@ -43,59 +96,6 @@ export function BaseQueryPlanNode({ node }: BaseQueryPlanNodeProps) {
           ))}
         </div>
       )}
-
-      <style jsx>{`
-        .query-plan-node {
-          background: white;
-          border: 2px solid ${theme.borderColor};
-          border-radius: 6px;
-          min-width: 200px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .query-plan-node-header {
-          position: relative;
-          padding: 8px 12px;
-          background: ${theme.backgroundColor};
-          border-bottom: 1px solid ${theme.borderColor}30;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .query-plan-node-title {
-          font-weight: 600;
-          font-size: 14px;
-          color: ${theme.textColor};
-        }
-
-        .query-plan-node-body {
-          padding: 4px 0;
-        }
-
-        .query-plan-node-member {
-          padding: 4px 12px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 13px;
-          position: relative;
-        }
-
-        .query-plan-node-member:not(:last-child) {
-          border-bottom: 1px dashed #e5e7eb;
-        }
-
-        .member-name {
-          color: #374151;
-        }
-
-        .member-type {
-          color: #9ca3af;
-          font-size: 12px;
-        }
-      `}</style>
     </div>
   );
 }
