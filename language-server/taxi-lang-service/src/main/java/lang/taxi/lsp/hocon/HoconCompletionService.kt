@@ -1,6 +1,5 @@
 package lang.taxi.lsp.hocon
 
-import org.eclipse.lsp4j.CompletionItem
 import org.eclipse.lsp4j.CompletionList
 import org.eclipse.lsp4j.CompletionParams
 import org.eclipse.lsp4j.Diagnostic
@@ -15,16 +14,38 @@ import kotlin.reflect.KClass
  *
  * @param T The Kotlin type representing the HOCON configuration
  */
-class HoconService<T : Any>(
+class HoconCompletionService<T : Any>(
    klass: KClass<T>,
    ignoredFields: Set<String> = emptySet(),
-   validator: HoconValidator<T>? = null,
    customizer: HoconCompletionCustomizer? = null,
+   private val parser: HoconParser<T>,
    private val sourceName: String = "hocon"
 ) {
 
+   companion object {
+      inline fun <reified T : Any> build(
+         parser: HoconParser<T>,
+         ignoredFields: Set<String> = emptySet(),
+         customizers: List<HoconCompletionCustomizer> = emptyList(),
+         sourceName: String = "hocon",
+      ): HoconCompletionService<T> {
+         val compositeCustomizer = if (customizers.isNotEmpty()) {
+            CompositeHoconCompletionCustomizer(customizers)
+         } else {
+            null
+         }
+
+         return HoconCompletionService(
+            klass = T::class,
+            ignoredFields = ignoredFields,
+            customizer = compositeCustomizer,
+            sourceName = sourceName,
+            parser = parser
+         )
+      }
+   }
+
    private val schemaProvider = HoconSchemaProvider(klass, ignoredFields)
-   private val parser = HoconParser(klass, validator)
    private val completionProvider = HoconCompletionProvider(schemaProvider, customizer)
 
    // Cache parse results per document URI
@@ -72,72 +93,4 @@ class HoconService<T : Any>(
    fun clearAllCaches() {
       parseCache.clear()
    }
-}
-
-/**
- * Builder for creating HoconService instances with a fluent API.
- */
-class HoconServiceBuilder<T : Any>(private val klass: KClass<T>) {
-   private var ignoredFields: Set<String> = emptySet()
-   private var validator: HoconValidator<T>? = null
-   private val customizers = mutableListOf<HoconCompletionCustomizer>()
-   private var sourceName: String = "hocon"
-
-   /**
-    * Specify fields to ignore when extracting schema
-    */
-   fun ignoreFields(vararg fields: String): HoconServiceBuilder<T> {
-      this.ignoredFields = fields.toSet()
-      return this
-   }
-
-   /**
-    * Add a custom validator for domain-specific validation
-    */
-   fun withValidator(validator: HoconValidator<T>): HoconServiceBuilder<T> {
-      this.validator = validator
-      return this
-   }
-
-   /**
-    * Add a completion customizer
-    */
-   fun withCustomizer(customizer: HoconCompletionCustomizer): HoconServiceBuilder<T> {
-      this.customizers.add(customizer)
-      return this
-   }
-
-   /**
-    * Set the source name for diagnostics
-    */
-   fun withSourceName(name: String): HoconServiceBuilder<T> {
-      this.sourceName = name
-      return this
-   }
-
-   /**
-    * Build the HoconService
-    */
-   fun build(): HoconService<T> {
-      val compositeCustomizer = if (customizers.isNotEmpty()) {
-         CompositeHoconCompletionCustomizer(customizers)
-      } else {
-         null
-      }
-
-      return HoconService(
-         klass = klass,
-         ignoredFields = ignoredFields,
-         validator = validator,
-         customizer = compositeCustomizer,
-         sourceName = sourceName
-      )
-   }
-}
-
-/**
- * Create a HoconService builder for the specified type
- */
-inline fun <reified T : Any> hoconService(): HoconServiceBuilder<T> {
-   return HoconServiceBuilder(T::class)
 }

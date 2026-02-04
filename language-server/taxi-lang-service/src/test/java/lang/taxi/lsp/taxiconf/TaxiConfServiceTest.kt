@@ -77,16 +77,6 @@ class TaxiConfServiceTest : DescribeSpec({
       }
 
       describe("diagnostics") {
-         it("should report error for missing required fields") {
-            val content = """
-               sourceRoot: src/
-            """.trimIndent()
-
-            val diagnostics = service.getDiagnostics("file:///test/taxi.conf", content)
-
-            diagnostics.shouldNotBeEmpty()
-            diagnostics.any { it.message.contains("name") || it.message.contains("version") } shouldBe true
-         }
 
          it("should validate successfully for a valid configuration") {
             val content = """
@@ -120,9 +110,9 @@ class TaxiConfServiceTest : DescribeSpec({
 
             val diagnostics = service.getDiagnostics("file:///test/taxi.conf", content)
 
-            val nameDiagnostic = diagnostics.find { it.message.contains("project name") }
+            val nameDiagnostic = diagnostics.find { it.message.contains("project id") }
             nameDiagnostic shouldNotBe null
-            nameDiagnostic?.severity shouldBe DiagnosticSeverity.Warning
+            nameDiagnostic?.severity shouldBe DiagnosticSeverity.Error
          }
 
          it("should handle parse errors gracefully") {

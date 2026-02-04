@@ -1,5 +1,6 @@
 package lang.taxi.lsp.hocon
 
+import com.google.common.base.Throwables
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigException
 import com.typesafe.config.ConfigFactory
@@ -19,10 +20,10 @@ import kotlin.reflect.KClass
  *
  * @param T The Kotlin type representing the expected HOCON structure
  */
-class HoconParser<T : Any>(
-   private val klass: KClass<T>,
+abstract class HoconParser<T : Any>(
    private val validator: HoconValidator<T>? = null
 ) {
+   abstract fun extract(config: Config): T
 
    data class ParseResult<T>(
       val value: T?,
@@ -42,7 +43,7 @@ class HoconParser<T : Any>(
 
          // Try to extract into the target type
          try {
-            val value = config.extract<T>(klass)
+            val value = extract(config)
 
             // Run custom validation if provided
             validator?.validate(value, diagnostics)
@@ -88,7 +89,8 @@ class HoconParser<T : Any>(
    }
 
    private fun createDiagnosticFromException(e: Exception, content: String, sourceName: String): Diagnostic {
-      val message = e.message ?: "Configuration extraction error"
+      val rootCause = Throwables.getRootCause(e)
+      val message = rootCause.message ?: "Could not parse $sourceName"
 
       // Try to extract field name from error message
       val fieldPattern = Regex("""No configuration setting found for key '([^']+)'""")

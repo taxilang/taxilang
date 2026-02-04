@@ -1,11 +1,19 @@
 package lang.taxi.lsp.taxiconf
 
-import lang.taxi.lsp.hocon.HoconService
-import lang.taxi.lsp.hocon.hoconService
+import com.typesafe.config.Config
+import io.github.config4k.extract
+import lang.taxi.lsp.hocon.HoconParser
+import lang.taxi.lsp.hocon.HoconCompletionService
 import lang.taxi.packages.TaxiPackageProject
 import org.eclipse.lsp4j.CompletionList
 import org.eclipse.lsp4j.CompletionParams
 import org.eclipse.lsp4j.Diagnostic
+
+private class TaxiConfParser : HoconParser<TaxiPackageProject>(
+   TaxiConfValidator()
+) {
+   override fun extract(config: Config): TaxiPackageProject = config.extract()
+}
 
 /**
  * Service for handling taxi.conf files in the language server.
@@ -17,9 +25,9 @@ class TaxiConfService {
 
    companion object {
       /**
-         * Fields in TaxiPackageProject that are computed/derived and should not be
-         * suggested in completions or validated in the config file.
-         */
+       * Fields in TaxiPackageProject that are computed/derived and should not be
+       * suggested in completions or validated in the config file.
+       */
       private val IGNORED_FIELDS = setOf(
          "identifier",
          "dependencyPackages",
@@ -29,12 +37,12 @@ class TaxiConfService {
       )
    }
 
-   private val hoconService: HoconService<TaxiPackageProject> = hoconService<TaxiPackageProject>()
-      .ignoreFields(*IGNORED_FIELDS.toTypedArray())
-      .withValidator(TaxiConfValidator())
-      .withCustomizer(TaxiConfCompletionCustomizer())
-      .withSourceName("taxi.conf")
-      .build()
+   private val hoconService: HoconCompletionService<TaxiPackageProject> = HoconCompletionService.build<TaxiPackageProject>(
+      parser = TaxiConfParser(),
+      ignoredFields = IGNORED_FIELDS,
+      customizers = listOf(TaxiConfCompletionCustomizer()),
+      sourceName = "taxi.conf"
+   )
 
    /**
     * Get completions for a taxi.conf file

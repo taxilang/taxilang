@@ -4,6 +4,7 @@ import org.eclipse.lsp4j.CompletionItem
 import org.eclipse.lsp4j.CompletionItemKind
 import org.eclipse.lsp4j.InsertTextFormat
 import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.jsonrpc.messages.Either
 
 /**
  * Generic completion provider for HOCON files based on Kotlin type reflection.
@@ -36,10 +37,12 @@ class HoconCompletionProvider<T : Any>(
             val default = getTopLevelCompletions()
             customizer?.getTopLevelCompletions(currentText.trim(), default) ?: default
          }
+
          is CompletionContext.ObjectProperty -> {
             val default = getObjectPropertyCompletions(context.objectType, context.prefix)
             customizer?.getObjectPropertyCompletions(context.objectType, context.prefix, default) ?: default
          }
+
          is CompletionContext.MapKey -> {
             val schema = schemaProvider.getPropertySchema(context.mapName)
             if (schema != null) {
@@ -49,6 +52,7 @@ class HoconCompletionProvider<T : Any>(
                emptyList()
             }
          }
+
          is CompletionContext.Value -> {
             val schema = schemaProvider.getPropertySchema(context.propertyPath)
             if (schema != null) {
@@ -58,6 +62,7 @@ class HoconCompletionProvider<T : Any>(
                emptyList()
             }
          }
+
          is CompletionContext.Unknown -> emptyList()
       }
    }
@@ -69,7 +74,7 @@ class HoconCompletionProvider<T : Any>(
             is HoconSchemaProvider.PropertyType.Primitive -> CompletionItemKind.Field
             is HoconSchemaProvider.PropertyType.Object -> CompletionItemKind.Class
             is HoconSchemaProvider.PropertyType.Map -> CompletionItemKind.Struct
-            is HoconSchemaProvider.PropertyType.List -> CompletionItemKind.Enum
+            is HoconSchemaProvider.PropertyType.ListType -> CompletionItemKind.Enum
             is HoconSchemaProvider.PropertyType.Enum -> CompletionItemKind.Enum
          }
 
@@ -80,8 +85,10 @@ class HoconCompletionProvider<T : Any>(
 
          // Set details and documentation
          item.detail = schemaProvider.getTypeDescription(property.type)
-         item.documentation = customizer?.getPropertyDocumentation(property)
-            ?: buildDocumentation(property)
+         item.documentation = Either.forLeft(
+            customizer?.getPropertyDocumentation(property)
+               ?: buildDocumentation(property)
+         )
 
          item
       }
@@ -101,14 +108,17 @@ class HoconCompletionProvider<T : Any>(
             is HoconSchemaProvider.PropertyType.Primitive -> {
                "${property.name}: \"\$1\""
             }
+
             else -> {
                "${property.name}: \$1"
             }
          }
          item.insertTextFormat = InsertTextFormat.Snippet
          item.detail = schemaProvider.getTypeDescription(property.type)
-         item.documentation = customizer?.getPropertyDocumentation(property)
-            ?: buildDocumentation(property)
+         item.documentation = Either.forLeft(
+            customizer?.getPropertyDocumentation(property)
+               ?: buildDocumentation(property)
+         )
 
          item
       }.filter { it.label.startsWith(prefix, ignoreCase = true) }
@@ -127,6 +137,7 @@ class HoconCompletionProvider<T : Any>(
                item
             }
          }
+
          is HoconSchemaProvider.PropertyType.Primitive -> {
             if (type.typeName == "Boolean") {
                listOf("true", "false").map { value ->
@@ -138,6 +149,7 @@ class HoconCompletionProvider<T : Any>(
                emptyList()
             }
          }
+
          else -> emptyList()
       }.filter { it.label.startsWith(prefix, ignoreCase = true) }
    }
@@ -151,15 +163,19 @@ class HoconCompletionProvider<T : Any>(
                "${property.name}: \"\$1\""
             }
          }
+
          is HoconSchemaProvider.PropertyType.Object -> {
             "${property.name}: {\n  \$1\n}"
          }
+
          is HoconSchemaProvider.PropertyType.Map -> {
             "${property.name}: {\n  \$1\n}"
          }
-         is HoconSchemaProvider.PropertyType.List -> {
+
+         is HoconSchemaProvider.PropertyType.ListType -> {
             "${property.name}: [\n  \$1\n]"
          }
+
          is HoconSchemaProvider.PropertyType.Enum -> {
             "${property.name}: \$1"
          }
@@ -191,12 +207,12 @@ class HoconCompletionProvider<T : Any>(
 
       // Simple heuristic-based context detection
       val trimmed = beforeCursor.trim()
-      if (trimmed.isEmpty() || (!trimmed.contains(':') && !trimmed.contains('{'))) {
-         return CompletionContext.TopLevel
-      }
 
       // Try to determine the property path by looking at previous lines
       val propertyPath = extractPropertyPath(lines, position)
+      if (propertyPath.isEmpty()) {
+         return CompletionContext.TopLevel
+      }
 
       // Check if we're completing a value (after colon)
       if (beforeCursor.contains(':')) {
@@ -211,19 +227,28 @@ class HoconCompletionProvider<T : Any>(
          return CompletionContext.Value(propertyPath, afterColon)
       }
 
-      // Try to get the parent object type
       val parentPath = propertyPath.substringBeforeLast('.', "")
-      val parentSchema = if (parentPath.isNotEmpty()) {
-         schemaProvider.getPropertySchema(parentPath)
-      } else {
-         null
+
+      // TODO :  This needs filling out
+      return when {
+//          parentPath.isNotEmpty() -> {
+//              schemaProvider.getPropertySchema(parentPath)?.let { parentSchema ->
+//                 CompletionContext.ObjectProperty(parentSchema.type, trimmed)
+//              } ?: schemaProvider.getPropertySchema(propertyPath)
+//          }
+         propertyPath.isNotEmpty() -> {
+            val propertySchema = schemaProvider.getPropertySchema(propertyPath)
+            if (propertySchema != null) {
+               CompletionContext.MapKey(propertySchema.name, trimmed)
+            } else {
+               CompletionContext.Unknown
+            }
+         }
+          else -> {
+             CompletionContext.Unknown
+          }
       }
 
-      if (parentSchema?.type is HoconSchemaProvider.PropertyType.Object) {
-         return CompletionContext.ObjectProperty(parentSchema.type, trimmed)
-      }
-
-      return CompletionContext.Unknown
    }
 
    private fun extractPropertyPath(lines: List<String>, position: Position): String {
@@ -255,7 +280,9 @@ class HoconCompletionProvider<T : Any>(
 
    sealed class CompletionContext {
       object TopLevel : CompletionContext()
-      data class ObjectProperty(val objectType: HoconSchemaProvider.PropertyType.Object, val prefix: String) : CompletionContext()
+      data class ObjectProperty(val objectType: HoconSchemaProvider.PropertyType.Object, val prefix: String) :
+         CompletionContext()
+
       data class MapKey(val mapName: String, val prefix: String) : CompletionContext()
       data class Value(val propertyPath: String, val prefix: String) : CompletionContext()
       object Unknown : CompletionContext()

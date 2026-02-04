@@ -3,11 +3,9 @@ package lang.taxi.lsp.hocon
 import com.typesafe.config.Config
 import java.nio.file.Path
 import kotlin.reflect.KClass
-import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.jvm.javaType
 
 /**
  * Generic schema provider for HOCON configuration files using Kotlin reflection.
@@ -49,7 +47,8 @@ class HoconSchemaProvider<T : Any>(
       data class Primitive(val typeName: String) : PropertyType()
       data class Object(val className: String, val klass: KClass<*>, val properties: List<PropertySchema>) : PropertyType()
       data class Map(val keyType: String, val valueType: PropertyType) : PropertyType()
-      data class List(val elementType: PropertyType) : PropertyType()
+      // Named to avoid collision with List<>
+      data class ListType(val elementType: PropertyType) : PropertyType()
       data class Enum(val className: String, val values: kotlin.collections.List<String>) : PropertyType()
    }
 
@@ -165,7 +164,7 @@ class HoconSchemaProvider<T : Any>(
             val elementType = type.arguments.firstOrNull()?.type?.let {
                extractPropertyType(it)
             } ?: PropertyType.Primitive("Any")
-            PropertyType.List(elementType)
+            PropertyType.ListType(elementType)
          }
 
          // Enum
@@ -192,7 +191,7 @@ class HoconSchemaProvider<T : Any>(
          is PropertyType.Primitive -> type.typeName
          is PropertyType.Object -> type.className
          is PropertyType.Map -> "Map<${type.keyType}, ${getTypeDescription(type.valueType)}>"
-         is PropertyType.List -> "List<${getTypeDescription(type.elementType)}>"
+         is PropertyType.ListType -> "List<${getTypeDescription(type.elementType)}>"
          is PropertyType.Enum -> type.className
       }
    }
