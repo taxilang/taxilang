@@ -27,7 +27,7 @@ class TaxiNotebookService(
    private val compilerService: TaxiCompilerService
 ) : NotebookService {
 
-   private val stubQueryService = StubQueryService()
+
    private val insightUtils = QueryInsightUtils()
 
    override fun generateQueryPlan(params: StubQueryRequest): CompletableFuture<QueryPlanResponse> {
@@ -58,6 +58,8 @@ class TaxiNotebookService(
       log().info("Number of stubs: ${params.stubs.size}")
 
       return CompletableFuture.supplyAsync {
+
+         val stubQueryService = StubQueryService()
          try {
             val startTime = System.currentTimeMillis()
 
@@ -173,7 +175,10 @@ class TaxiNotebookService(
     * Map a Taxi ServiceMember to a simple DTO for JSONRPC serialization.
     * Handles all subtypes: Operation, Query, etc.
     */
-   private fun toServiceMemberDto(member: lang.taxi.services.ServiceMember, serviceQualifiedName: String): ServiceMemberDto {
+   private fun toServiceMemberDto(
+      member: lang.taxi.services.ServiceMember,
+      serviceQualifiedName: String
+   ): ServiceMemberDto {
       val qualifiedName = member.qualifiedName
       // Extract the name from the qualified name (after the ::)
       val name = qualifiedName.split("::").last()
@@ -189,6 +194,7 @@ class TaxiNotebookService(
                )
             )
          }
+
          else -> emptyList()
       }
 
@@ -199,7 +205,7 @@ class TaxiNotebookService(
       )
 
       return ServiceMemberDto(
-         qualifiedName = OperationNames.qualifiedName(serviceQualifiedName,member.name).fullyQualifiedName,
+         qualifiedName = OperationNames.qualifiedName(serviceQualifiedName, member.name).fullyQualifiedName,
          serviceName = serviceQualifiedName,
          name = name,
          parameters = parameters,
@@ -213,10 +219,11 @@ class TaxiNotebookService(
 
       return CompletableFuture.supplyAsync {
          try {
-            val schema = compilerService.lastSuccessfulCompilation()?.let { TaxiSchema(it.documentOrEmpty, emptyList()) }
-               ?: TaxiSchema.empty()
+            val schema =
+               compilerService.lastSuccessfulCompilation()?.let { TaxiSchema(it.documentOrEmpty, emptyList()) }
+                  ?: TaxiSchema.empty()
             val operationQualifiedName = params.operationQualifiedName.fqn()
-            val (service,operation) = schema.remoteOperation(operationQualifiedName)
+            val (service, operation) = schema.remoteOperation(operationQualifiedName)
             val mockInstance = MockTypedInstanceBuilder.build(operation.returnType, schema)
             val rawValue = mockInstance.toRawObject()
             val json = Jackson.defaultObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rawValue)
@@ -238,24 +245,32 @@ class TaxiNotebookService(
             val builder = QueryPlanDiagramBuilder(schema)
 
             params.names
-
                .filterNot { it.trim().startsWith("//") } // Exclude lines which are comments
                .forEach { name ->
-               try {
-                  if (name.endsWith("*")) {
-                     // Handle wildcard expansion
-                     expandWildcard(name.removeSuffix("*"), schema, builder)
-                  } else {
-                     // Handle regular name
-                     when (val member = schema.getMember(name.fqn())) {
-                        is Type -> builder.addType(member)
-                        is Service -> builder.addService(member)
+                  try {
+                     when {
+                        name.trim() == "*" -> {
+                           // Handle global wildcard - add all types and services
+                           expandGlobalWildcard(schema, builder)
+                        }
+
+                        name.endsWith("*") -> {
+                           // Handle member wildcard expansion
+                           expandWildcard(name.removeSuffix("*"), schema, builder)
+                        }
+
+                        else -> {
+                           // Handle regular name
+                           when (val member = schema.getMember(name.fqn())) {
+                              is Type -> builder.addType(member)
+                              is Service -> builder.addService(member)
+                           }
+                        }
                      }
+                  } catch (e: Exception) {
+                     log().warn("Failed to add member: $name", e)
                   }
-               } catch (e: Exception) {
-                  log().warn("Failed to add member: $name", e)
                }
-            }
 
             val diagram = builder.build("")
             QueryPlanResponse(diagramData = diagram)
@@ -264,6 +279,37 @@ class TaxiNotebookService(
             throw e
          }
       }
+   }
+
+   /**
+    * Expands a global wildcard (*) to include all types and services in the schema.
+    * This provides a complete overview of the project structure.
+    */
+   private fun expandGlobalWildcard(schema: TaxiSchema, builder: QueryPlanDiagramBuilder) {
+      log().debug("Expanding global wildcard - adding all types and services")
+      val excludedNamespaces = listOf("org.taxi", "com.orbitalhq", "lang.taxi")
+      // Add all types
+      schema.types
+         .filter { !it.isScalar }
+         .filter { type -> excludedNamespaces.none { type.qualifiedName.namespace.startsWith(it) } }
+         .forEach { type ->
+         try {
+            builder.addType(type)
+         } catch (e: Exception) {
+            log().debug("Failed to add type ${type.qualifiedName}", e)
+         }
+      }
+
+      // Add all services
+      schema.services.forEach { service ->
+         try {
+            builder.addService(service)
+         } catch (e: Exception) {
+            log().debug("Failed to add service ${service.qualifiedName}", e)
+         }
+      }
+
+      log().info("Added ${schema.types.size} types and ${schema.services.size} services to diagram")
    }
 
    /**

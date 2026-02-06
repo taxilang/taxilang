@@ -34,7 +34,11 @@ class IntroduceSemanticType : CodeActionProvider {
       val context = compiler
          .contextAt(params.range.start, params.textDocument)
          ?: return false
-      return isFieldDeclaration(context) && getFieldType(context!!, compiler)?.isPrimitiveType() ?: false
+      return try {
+         isFieldDeclaration(context) && getFieldType(context, compiler)?.isPrimitiveType() ?: false
+      } catch (_: Exception) {
+         return false
+      }
    }
 
 

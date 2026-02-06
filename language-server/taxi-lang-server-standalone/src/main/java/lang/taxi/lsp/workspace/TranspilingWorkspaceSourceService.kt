@@ -42,7 +42,6 @@ class TranspilingWorkspaceSourceService(
             val rootUri = params.rootUri
             val root = File(URI.create(SourceNames.normalize(rootUri)))
             require(root.exists()) { "Fatal error - the workspace root location ($rootUri) doesn't appear to exist" }
-
             return TranspilingWorkspaceSourceService(root.toPath(), client)
          }
       }
