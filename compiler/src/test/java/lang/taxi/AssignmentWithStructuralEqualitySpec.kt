@@ -3,6 +3,8 @@ package lang.taxi
 import arrow.core.Either
 import io.kotest.assertions.fail
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
 
 class AssignmentWithStructuralEqualitySpec : DescribeSpec({
 
@@ -210,6 +212,30 @@ class AssignmentWithStructuralEqualitySpec : DescribeSpec({
       }
 
       describe("array field compatibility") {
+
+         // This is the root cause of ORB-1060
+         it("should not permit incompatible array objects to be assignable") {
+            val schema = """
+               model Order {
+                  orderId : OrderId inherits Int
+               }
+               model OrderWithItems {
+                  orderId : OrderId
+                  items : {
+                     name : ProductName inherits String
+                  }[]
+               }
+            """.compiled()
+            val orderArray = schema.type("Order[]")
+            val orderWithItemsArray = schema.type("OrderWithItems[]")
+            orderArray.isAssignableTo(orderWithItemsArray).shouldBeFalse()
+            orderArray.isAssignableTo(orderWithItemsArray, permitStructurallyCompatible = false).shouldBeFalse()
+            orderWithItemsArray.isAssignableTo(orderArray).shouldBeTrue()
+            orderWithItemsArray.isAssignableTo(orderArray, permitStructurallyCompatible = false).shouldBeFalse()
+            orderArray.isAssignableTo(orderArray).shouldBeTrue()
+            orderWithItemsArray.isAssignableTo(orderWithItemsArray).shouldBeTrue()
+         }
+
          it("should check array element types recursively") {
             val source = """
                type Street inherits String

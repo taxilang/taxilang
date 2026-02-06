@@ -134,7 +134,7 @@ class TypeChecker(val enabled: FeatureToggle = FeatureToggle.DISABLED) {
          valueTypeWithoutAliases.typeParameters().forEachIndexed { index, type ->
             val otherParamType = assignmentTargetTypeWithoutAliases.typeParameters()[index].resolveAliases()
             val thisParamType = type.resolveAliases()
-            if (!thisParamType.isAssignableTo(otherParamType)) {
+            if (!thisParamType.isAssignableTo(otherParamType, permitStructurallyCompatible = permitStructurallyCompatible)) {
                return failWithReason("Parameter type ${thisParamType.qualifiedName} is not compatible with parameter type ${otherParamType.qualifiedName}")
             }
          }
