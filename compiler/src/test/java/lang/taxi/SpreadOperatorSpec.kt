@@ -7,6 +7,7 @@ import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import lang.taxi.types.ArrayType
 import lang.taxi.types.Field
 import lang.taxi.types.ObjectType
 
@@ -228,6 +229,48 @@ find { Movie[] } as {
             }
          """.validated()
          errors.should.have.size(0)
+      }
+
+      // ORB-1060
+      it("applies the spread operator to nested anonymous types") {
+         val (schema,query) = """
+            model Customer {
+               id : CustomerId inherits Int
+               name : CustomerName inherits String
+            }
+            model Order {
+               orderId : OrderId inherits Int
+               items : OrderItem[]
+            }
+            model OrderItem {
+               quantity : Quantity inherits Int
+               price : Price inherits Double
+            }
+            type ProductName inherits String
+         """.trimIndent().compiledWithQuery(
+            """
+               find { Customer } as {
+                name : CustomerName
+                orders: Order[] as {
+                    items: OrderItem[] as {
+                        name: ProductName
+                        ...
+                    }[]
+                }
+             }
+            """.trimIndent()
+         )
+         val itemsField = query.projectedObjectType!!.field("orders")
+            .type.asA<ObjectType>()
+            .field("items")
+            .type
+            .asA<ArrayType>()
+            .type.asA<ObjectType>()
+
+         itemsField.hasField("name").shouldBeTrue()
+         itemsField.hasField("quantity").shouldBeTrue()
+         itemsField.hasField("price").shouldBeTrue()
+
       }
 
       it("can mix nested anonymous types in a spread object") {
