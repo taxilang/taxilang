@@ -1,14 +1,15 @@
 ---
 version: next
 aggregateVersion: 'next'
-releaseDate: 2026-02-04
+releaseDate: 2026-02-06
 title: next release notes
 ---
 ## next
-2026-02-04
+2026-02-06
 
 ### Bug Fixes
 
+* **assignability:** fix isAssignable() for arrays when not using structural compatibility ([0b3270c](https://gitlab.com/taxi-lang/taxi-lang/commit/0b3270c184208900fbfb907d423fb18c5d06e5bd))
 * **core:** move unescaping of reserved words to the grammar ([6f9bffb](https://gitlab.com/taxi-lang/taxi-lang/commit/6f9bffb4e923268ab19ad6a9b40ccb6ef9d5b6dd))
 * **http:** added missing verbs OPTIONS and HEAD ([2167efb](https://gitlab.com/taxi-lang/taxi-lang/commit/2167efb7cdb71a005b903dcc08686a292a6f1325))
 
