@@ -6,13 +6,11 @@ import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
-import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.expressions.LiteralArray
 import lang.taxi.query.FactValue
 import lang.taxi.query.Parameter
-import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TypedValue
 import lang.taxi.utils.Benchmark
@@ -280,6 +278,44 @@ enum English {
 }
             """.trimIndent()
             Compiler(src).compile().enumType("French").value("Un").synonyms.should.have.size(1)
+         }
+
+         it("should handle member() lookups correctly when synonyms are applied via extensions") {
+            // This test reproduces a bug where the members lazy cache is initialized
+            // before applySynonymsToEnums() runs, causing hashcode mismatches
+            val src = """
+annotation MyAnnotation {
+   value: English
+}
+enum English {
+   One
+}
+enum French {
+   Un synonym of English.One
+}
+// This annotation will trigger resolveEnumMember() during compilation,
+// which calls member() and initializes the lazy BEFORE synonyms are applied
+@MyAnnotation(English.One)
+type AnnotatedType inherits String
+            """.trimIndent()
+            val doc = Compiler(src).compile()
+            val englishEnum = doc.enumType("English")
+
+            // After compilation, synonyms should be fully resolved
+            // English.One should have French.Un as a transitive synonym
+            englishEnum.value("One").synonyms.should.contain("French.Un")
+
+            // Now test member() lookup - this should work without hashcode mismatches
+            val member = englishEnum.member("One")
+            member.isRight().should.be.`true`
+
+            // Verify the member has the correct value with all synonyms
+            val enumValue = member.getOrNull()!!.value
+            enumValue.synonyms.should.contain("French.Un")
+
+            // Also test that member lookup works by value
+            val memberByValue = englishEnum.member(englishEnum.of("One").value)
+            memberByValue.isRight().should.be.`true`
          }
 
          describe("enum default values") {
@@ -640,7 +676,7 @@ enum English {
       }
 
       it("Can refer to a property of an enum") {
-         val schema = """
+         """
 model ErrorDetails {
    code : ErrorCode inherits Int
    message : ErrorMessage inherits String
@@ -652,30 +688,8 @@ enum Errors<ErrorDetails> {
 model Response {
   error: ErrorCode by Errors.BadRequest.code
 }
-         """.compiled()
-         val expression = schema.model("Response")
-            .field("error")
-            .accessor
-            .shouldNotBeNull()
-         expression
-//            .errors().shouldBeEmpty()
-      }
-      it("quick test") {
-         val (a,b) = """
-            model Person {
-               names : {
-                  firstName : FirstName inherits String
-                }
-             }
-         """.compiledWithQuery("""
-            find { Person } as (person:Person) -> {
-              name : FirstName = person.names.firstName
-           }
-         """.trimIndent())
-         val accessor = b.returnType.asA<ObjectType>()
-            .field("name")
-            .accessor
-         accessor
+         """.validated()
+            .errors().shouldBeEmpty()
       }
 
       it("Can refer to a property of an enum") {
