@@ -5,7 +5,7 @@ import com.github.zafarkhaja.semver.Version
 data class PackageIdentifier(val name: ProjectName, val version: String) {
 
    val id = "${name.id}/$version"
-
+   val uriSafeId = toUriSafeId(this)
    val fileSafeIdentifier = "${name.name}-$version"
    val semver: Version? = try {
       Version.valueOf(version)
@@ -36,6 +36,15 @@ data class PackageIdentifier(val name: ProjectName, val version: String) {
             name = ProjectName(organisation, name),
             version = version
          )
+      }
+
+      fun fromUriSafeId(uriSafeId: String): PackageIdentifier {
+         return fromId(uriSafeId.replace(":", "/"))
+      }
+
+
+      fun toUriSafeId(identifier: PackageIdentifier): String {
+         return identifier.id.replace("/", ":")
       }
 
       val UNSPECIFIED = PackageIdentifier(ProjectName("*", "*"), "0.0.0")

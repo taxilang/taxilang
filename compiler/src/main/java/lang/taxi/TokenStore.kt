@@ -67,12 +67,14 @@ class TokenStore(
     */
    fun collectDuplicateDeclarationsDetectedInImports(
       importSources: List<TaxiDocument>,
-      builtInCompiledTaxi: TaxiDocument
+      builtInCompiledTaxi: TaxiDocument,
+      importSymbolFilter: ImportSymbolFilter
    ): Map<String, Pair<Collection<ParserRuleContext>, List<CompilationUnit>>> {
       val declarationsMap = namedSymbolDeclarations.asMap()
       val duplicatesDeclaredInImports = declarationsMap
          // exclude built-ins
          .filter { (name, _) -> builtInCompiledTaxi.namedSymbolOrNull(name) == null }
+         .filter {  (name, _) -> importSymbolFilter(name) }
          .flatMap { (name, declarationsInCodeBeingCompiled) ->
             val existingDeclarations = importSources.mapNotNull { importSource ->
                importSource.namedSymbolOrNull(name)?.let { symbol ->
@@ -82,7 +84,8 @@ class TokenStore(
                }
             }
             existingDeclarations
-         }.toMap()
+         }
+         .toMap()
       return duplicatesDeclaredInImports
    }
 

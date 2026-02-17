@@ -1,12 +1,36 @@
 package lang.taxi.types
 
 import com.google.common.cache.CacheBuilder
+import lang.taxi.packages.PackageIdentifier
 import java.io.File
 import java.lang.Exception
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.Paths
+
+object WorkspaceUri {
+   const val PREFIX = "workspace://"
+   /**
+    * Generates a uri in a custom workspace uri format, containing the packageIdentifier.
+    * This is preferred to using the path property, as it doesn't leak physical disk location,
+    * but is still unique
+    *
+    * eg: workspace://com.foo.acme:myProject:1.0.0/queries/foo.taxi
+    */
+   fun toWorkspaceUri(packageIdentifier: PackageIdentifier?, name: String): String? {
+      return if (packageIdentifier != null) {
+         // Convert to Taxi PackageIdentifier
+         "$PREFIX${packageIdentifier.uriSafeId}/$name"
+      } else null
+   }
+
+   fun splitWorkspaceUri(workspaceUri: String):Pair<PackageIdentifier, String> {
+      val uri = URI.create(workspaceUri)
+      val packageIdentifier = PackageIdentifier.fromUriSafeId(uri.authority)
+      return packageIdentifier to uri.path.removePrefix("/")
+   }
+}
 
 object SourceNames {
    private val sourceNameCache = CacheBuilder.newBuilder()
@@ -35,6 +59,7 @@ object SourceNames {
             sourceName
          } else {
             tryParseAsInMemory(sourceName)
+               ?: tryParseAsWorkspaceUri(sourceName)
                ?: tryParseAsUri(sourceName)
                ?: tryParseAsFile(sourceName)
                ?: tryParseAsPath(sourceName)
@@ -43,6 +68,11 @@ object SourceNames {
       }
    }
 
+   private fun tryParseAsWorkspaceUri(sourceName: String): String? {
+      return if (sourceName.startsWith(WorkspaceUri.PREFIX)) {
+         sourceName
+      } else null
+   }
    // When usig the in-memory LSP, source URI's are passed as
    // inmemory:// ....
    private fun tryParseAsInMemory(sourceName: String): String? {

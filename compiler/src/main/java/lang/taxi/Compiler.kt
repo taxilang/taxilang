@@ -2,7 +2,6 @@ package lang.taxi
 
 import arrow.core.Either
 import arrow.core.getOrHandle
-import com.google.common.base.Stopwatch
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.collect.Table
@@ -32,7 +31,6 @@ import java.io.Serializable
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
@@ -278,11 +276,24 @@ fun TaxiPackageProject.buildCompilerConfig(): CompilerConfig {
    )
 }
 
+
+object ImportSymbolFilters {
+   fun excludeNamed(names: Set<ParameterizedName>):ImportSymbolFilter {
+      return { named ->  !names.contains(named) }
+   }
+   val IncludeEverything: ImportSymbolFilter = { true }
+}
+
+/**
+ * A predicate which allows excluding certain symbols from imported sources.
+ */
+typealias ImportSymbolFilter = (ParameterizedName) -> Boolean
 class Compiler(
    val inputs: List<CharStream>,
    val importSources: List<TaxiDocument> = emptyList(),
    private val tokenCache: CompilerTokenCache = CompilerTokenCache(),
-   val config: CompilerConfig = CompilerConfig()
+   val config: CompilerConfig = CompilerConfig(),
+   val importSymbolFilter: ImportSymbolFilter = ImportSymbolFilters.IncludeEverything
 ) {
    constructor(
       input: CharStream,
@@ -401,10 +412,10 @@ class Compiler(
       parseResult.errors
    }
    private val tokenProcessorWithImports: TokenProcessor by lazy {
-      TokenProcessor(tokens, importSources + builtInCompiledTaxi.get(), typeChecker = typeChecker, linter = config.linter)
+      TokenProcessor(tokens, importSources + builtInCompiledTaxi.get(), typeChecker = typeChecker, linter = config.linter, importFilter = importSymbolFilter)
    }
    private val tokenProcessorWithoutImports: TokenProcessor by lazy {
-      TokenProcessor(tokens, collectImports = false, typeChecker = typeChecker, linter = config.linter)
+      TokenProcessor(tokens, collectImports = false, typeChecker = typeChecker, linter = config.linter, importFilter = importSymbolFilter)
    }
 
    val typeSystem: TypeSystem
@@ -690,7 +701,7 @@ class Compiler(
       // Check for duplicate symbol declarations across all named symbols
       val duplicateSeverity = config.compilerOptions.duplicateDefinitionSeverity
       val duplicateErrors =
-         timedTokens.value.detectDuplicates(duplicateSeverity, this.importSources, builtInCompiledTaxi.get())
+         timedTokens.value.detectDuplicates(duplicateSeverity, this.importSources, builtInCompiledTaxi.get(), importSymbolFilter)
       val allErrors = errors + duplicateErrors
 
       return CollectedTokens(
