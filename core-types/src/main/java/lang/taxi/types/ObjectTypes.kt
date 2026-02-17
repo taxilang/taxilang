@@ -524,12 +524,12 @@ data class Annotation(
    val name: String,
    val parameters: Map<String, Any?> = emptyMap(),
    val type: AnnotationType? = null
-) : TaxiStatementGenerator {
+) : TaxiStatementGenerator, Named {
    constructor(type: AnnotationType, parameters: Map<String, Any?>) : this(type.qualifiedName, parameters, type)
 
    // For compatability.  Should probably migrate to using qualifiedName in
    // the constructor to be consistent.
-   val qualifiedName: String = name
+   override val qualifiedName: String = name
 
    /**
     * Returns the "value" parameter (ie.,

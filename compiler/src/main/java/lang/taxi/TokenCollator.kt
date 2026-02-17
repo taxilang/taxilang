@@ -104,9 +104,13 @@ data class Tokens(
     *
     * @param severity The severity level to use for duplicate symbol errors (ERROR, WARNING, or INFO)
     */
-   fun detectDuplicates(severity: Severity, importSources: List<TaxiDocument>, builtInCompiledTaxi: TaxiDocument): List<CompilationError> {
-      data class SymbolOccurrence(val name: String, val kind: String, val context: ParserRuleContext?, val sourceName: String?)
-      val duplicateDefinitionsFromImports = tokenStore.collectDuplicateDeclarationsDetectedInImports(importSources, builtInCompiledTaxi)
+   fun detectDuplicates(
+      severity: Severity,
+      importSources: List<TaxiDocument>,
+      builtInCompiledTaxi: TaxiDocument,
+      importSymbolFilter: ImportSymbolFilter
+   ): List<CompilationError> {
+      val duplicateDefinitionsFromImports = tokenStore.collectDuplicateDeclarationsDetectedInImports(importSources, builtInCompiledTaxi, importSymbolFilter)
          .map { (nameOfConflictingSymbol, pair) ->
             val (placesDeclaredInTheseSources,placesDeclaredInImportedSources) = pair
             placesDeclaredInTheseSources.map { redeclarationSite ->
