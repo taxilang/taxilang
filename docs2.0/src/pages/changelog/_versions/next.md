@@ -1,11 +1,11 @@
 ---
 version: next
 aggregateVersion: 'next'
-releaseDate: 2026-02-24
+releaseDate: 2026-02-26
 title: next release notes
 ---
 ## next
-2026-02-24
+2026-02-26
 
 ### Bug Fixes
 
@@ -13,6 +13,7 @@ title: next release notes
 * **compiler:** fix incorrect "Enum does not contain a member of" errors ([671aa45](https://gitlab.com/taxi-lang/taxi-lang/commit/671aa45bc4f32e8e589c46405c6f1d746bc25792))
 * **core:** move unescaping of reserved words to the grammar ([6f9bffb](https://gitlab.com/taxi-lang/taxi-lang/commit/6f9bffb4e923268ab19ad6a9b40ccb6ef9d5b6dd))
 * **http:** added missing verbs OPTIONS and HEAD ([2167efb](https://gitlab.com/taxi-lang/taxi-lang/commit/2167efb7cdb71a005b903dcc08686a292a6f1325))
+* **package-manager:** clean up git workspace directory path resolution ([b22d98b](https://gitlab.com/taxi-lang/taxi-lang/commit/b22d98bf6ac565a3ace70fba84e3f2d803da00b7))
 
 
 ### Features
