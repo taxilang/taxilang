@@ -3,6 +3,7 @@ package org.taxilang.packagemanager.transports
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import lang.taxi.packages.ImporterConfig
 import org.eclipse.jgit.api.Git
 import org.junit.jupiter.api.Test
@@ -56,6 +57,35 @@ class GitRepoTransportTest {
       GitRepoTransport.uriToGitWorkspaceDirectory(tempWorkdir.toPath(),"https://github.com/taxi-lang/test-project-a.git#feature/my-branch")
          .relativeFrom(tempWorkdir)
          .shouldBe("github.com/taxi-lang/test-project-a/feature/my-branch")
+   }
+
+   @Test
+   fun `different versions resolve to different workspace directories`() {
+      val dir035 = GitRepoTransport.uriToGitWorkspaceDirectory(tempWorkdir.toPath(),"https://github.com/orbitalapi/orbital-core-taxi.git#0.35.0")
+         .relativeFrom(tempWorkdir)
+      val dir036 = GitRepoTransport.uriToGitWorkspaceDirectory(tempWorkdir.toPath(),"https://github.com/orbitalapi/orbital-core-taxi.git#0.36.0")
+         .relativeFrom(tempWorkdir)
+
+      dir035.shouldBe("github.com/orbitalapi/orbital-core-taxi/0.35.0")
+      dir036.shouldBe("github.com/orbitalapi/orbital-core-taxi/0.36.0")
+      // Ensure they are different directories
+      dir035.shouldNotBe(dir036)
+   }
+
+   @Test
+   fun `workspace directory uses hierarchical path structure from shorthand`() {
+      // Resolve the shorthand first (as happens in the real flow)
+      val resolved = GitRepoTransport.resolveGitShorthandIfPresent("github:orbitalapi/orbital-core-taxi#0.35.0")
+      GitRepoTransport.uriToGitWorkspaceDirectory(tempWorkdir.toPath(), resolved)
+         .relativeFrom(tempWorkdir)
+         .shouldBe("github.com/orbitalapi/orbital-core-taxi/0.35.0")
+   }
+
+   @Test
+   fun `workspace directory handles git url with trailing slash`() {
+      GitRepoTransport.uriToGitWorkspaceDirectory(tempWorkdir.toPath(),"https://github.com/orbitalapi/orbital-core-taxi.git/#0.35.0")
+         .relativeFrom(tempWorkdir)
+         .shouldBe("github.com/orbitalapi/orbital-core-taxi/0.35.0")
    }
 
    @Test
