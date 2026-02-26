@@ -126,6 +126,8 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
        * We use a hierarchical structure - so https://github.com/taxi-lang/test-project-a.git#0.34.0
        * becomes github.com/taxi-lang/test-project-a/0.34.0
        *
+       * The fragment (tag/branch) is included in the path to allow different versions
+       * to coexist without conflicts.
        */
       fun uriToGitWorkspaceDirectory(gitWorkspace: Path, uri: String) =
          uriToGitWorkspaceDirectory(gitWorkspace, URI.create(uri))
@@ -136,10 +138,13 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
        *
        */
       fun uriToGitWorkspaceDirectory(gitWorkspace: Path, uri: URI): Path {
-         val pathToRepo = listOfNotNull(uri.host, uri.path.removeSuffix(".git"), uri.fragment ?: "@default")
+         val repoPath = uri.path
+            .removeSuffix("/")
+            .removeSuffix(".git")
+            .removePrefix("/")
+         val pathToRepo = listOfNotNull(uri.host, repoPath, uri.fragment ?: "@default")
             .joinToString("/")
-         val workspaceRelativePath = gitWorkspace.resolve(pathToRepo)
-         return workspaceRelativePath
+         return gitWorkspace.resolve(pathToRepo)
       }
    }
 
