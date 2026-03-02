@@ -1,6 +1,7 @@
 package lang.taxi.packages
 
 import lang.taxi.messages.Severity
+import java.io.Serializable
 
 /**
  * Configuration options for the Taxi compiler.
@@ -23,7 +24,7 @@ data class CompilerOptions(
     * This only affects duplicate declarations, not extensions.
     */
    val duplicateDefinitionSeverity: Severity = Severity.ERROR
-) {
+): Serializable {
    companion object {
       /**
        * Default compiler options with standard settings.
