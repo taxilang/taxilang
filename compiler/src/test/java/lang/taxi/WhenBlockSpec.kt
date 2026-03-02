@@ -35,7 +35,7 @@ class WhenBlockSpec : DescribeSpec({
             }
          }""".validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("Type mismatch. Type of lang.taxi.Int is not assignable to type AssetClass")
+         errors.first().detailMessage.should.equal("Type mismatch. Type of AssetClass is not assignable to type lang.taxi.Int")
       }
 
       it("should detect a type mismatch of fields") {
@@ -67,6 +67,33 @@ class WhenBlockSpec : DescribeSpec({
             }
          }""".validated()
             .shouldContainMessage("Type mismatch. Type of Name is not assignable to type Identifier")
+      }
+
+      // ORB-1083
+      it("should handle an else block with a type with an expression") {
+"""
+
+type GrossAmountInPenceDecimal inherits Decimal
+type GrossAmountInPence inherits Int =  (Int) GrossAmountInPenceDecimal
+model Loan {
+    buyoutAmount: GrossAmountInPence?
+    amount: GrossAmountInPence
+}
+
+model Case {
+    loanAmount: GrossAmountInPence
+}
+
+  function caseToLoan(case: Case): Loan -> {
+
+
+    amount: when (case::GrossAmountInPence) {
+      GrossAmountInPence -> case::GrossAmountInPence
+      else -> (GrossAmountInPence) 0 // <--- this is the test, was generating an error "Type of lang.taxi.Any is not assignable to type GrossAmountInPence"
+    }
+
+  }
+""".compiled()
       }
 
       it("should detect type mismatch of value in when case selector") {
