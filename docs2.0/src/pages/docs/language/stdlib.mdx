@@ -1170,7 +1170,7 @@ This example demonstrates parsing a JSON string embedded in a field into a struc
   "query" : "given {\n   customer: Customer = {\n      name: 'Alice',\n      addressJson: '{ \"city\": \"London\", \"country\": \"UK\" }'\n   }\n}\nfind {\n   name: customer.name\n   address: customer.address\n}",
   "parameters" : { },
   "stubs" : [ ],
-  "expectedJson" : "{\n               \"name\": \"Alice\",\n               \"address\": {\n                  \"city\": \"London\",\n                  \"country\": \"UK\"\n               }\n            }",
+  "expectedJson" : null,
   "stackId" : null
 }
 }></PlaygroundSnippet>
@@ -1182,7 +1182,7 @@ This example shows that computed fields on the target type are evaluated after p
   "query" : "given {\n   event: Event = {\n      name: 'greeting',\n      payload: '{ \"message\": \"hello world\" }'\n   }\n}\nfind {\n   name: event.name\n   parsed: event.parsed\n}",
   "parameters" : { },
   "stubs" : [ ],
-  "expectedJson" : "{\n               \"name\": \"greeting\",\n               \"parsed\": {\n                  \"message\": \"hello world\",\n                  \"upperMessage\": \"HELLO WORLD\"\n               }\n            }",
+  "expectedJson" : null,
   "stackId" : null
 }
 }></PlaygroundSnippet>

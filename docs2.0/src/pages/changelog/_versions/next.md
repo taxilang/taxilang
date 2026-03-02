@@ -22,6 +22,7 @@ title: next release notes
 * **compiler:** restore duplicate type and service error detection ([b8015d9](https://gitlab.com/taxi-lang/taxi-lang/commit/b8015d92c273981fb9e5a98ca5f4edf8c1ea723f))
 * **core:** support merging and serialization of compiler options ([7a50496](https://gitlab.com/taxi-lang/taxi-lang/commit/7a50496fc82b61fb62fb71c01a2bf07538c051cc))
 * **language-server:** add context help and diagnostics for taxi.conf files ([1de0eab](https://gitlab.com/taxi-lang/taxi-lang/commit/1de0eaba91ecebe29027caeed3369d55c601e643))
+* **stdlib:** add parseJson function ([687f456](https://gitlab.com/taxi-lang/taxi-lang/commit/687f456aba68549f42176aa3dd28bcc4f481c1e4))
 * support filtering of imports in the compiler ([5027557](https://gitlab.com/taxi-lang/taxi-lang/commit/5027557f8a9ffda5f67d9c8467ea4f7442529abc))
 
 
