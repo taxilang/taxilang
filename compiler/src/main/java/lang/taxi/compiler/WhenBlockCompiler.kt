@@ -76,7 +76,7 @@ class WhenBlockCompiler internal constructor(
    ): Either<List<CompilationError>, WhenCaseBlock> {
       return compileMatchExpression(whenCase.caseDeclarationMatchExpression())
          .flatMap { matchExpression ->
-            typeChecker.ifAssignable(matchExpression.returnType, whenClauseSelectorType, whenCase) { matchExpression }
+            typeChecker.ifAssignable(whenClauseSelectorType, matchExpression.returnType,  whenCase) { matchExpression }
                .wrapErrorsInList()
          }
          .flatMap { matchExpression ->

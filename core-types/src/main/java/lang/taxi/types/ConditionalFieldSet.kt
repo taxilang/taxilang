@@ -197,95 +197,9 @@ data class InlineAssignmentExpression(override val assignment: Accessor) : Assig
    }
 }
 
-data class EnumValueAssignmentExpression(val enum: EnumType, val enumValue: EnumValue) : AssignmentExpression() {
-   override fun asTaxi(): String = "${enum.qualifiedName}.${enumValue.name}"
-   override val assignment: Accessor = LiteralAccessor(enumValue, enum)
-}
-
-interface WhenCaseMatchExpression : TaxiStatementGenerator {
-   val type: Type
-}
-
-// TODO : Can FieldReferenceSelector, ReferenceAssignment and ReferenceCaseMatchExpression all be merged?
-class ReferenceCaseMatchExpression(val reference: String, override val type: Type) : WhenCaseMatchExpression {
-   companion object {
-      fun fromField(field: Field): ReferenceCaseMatchExpression {
-         return ReferenceCaseMatchExpression(field.name, field.type)
-      }
-   }
-
-   override fun asTaxi(): String = reference // I don't think this is right...
-}
-
-class EnumLiteralCaseMatchExpression(val enumValue: EnumValue, override val type: EnumType) : WhenCaseMatchExpression {
-   override fun asTaxi(): String = enumValue.enumValueQualifiedName
-}
-
-class LiteralCaseMatchExpression(val value: Any) : WhenCaseMatchExpression {
-   private val accessor = LiteralAccessor(value)
-   override val type: Type = accessor.returnType
-
-   override fun asTaxi(): String = accessor.asTaxi()
-}
-
 object ElseMatchExpression : Expression() {
    override fun asTaxi(): String = "else"
    override val compilationUnits: List<CompilationUnit>
       get() = emptyList()
    override val returnType: Type = PrimitiveType.ANY
 }
-/*
-interface ValueAssignment : TaxiStatementGenerator {
-   val type: Type
-}
-
-data class ScalarAccessorValueAssignment(val accessor: Accessor) : ValueAssignment {
-   override fun asTaxi(): String = "/* ScalarAccessorValueAssignment does not yet generate taxi */"
-   override val type: Type = accessor.returnType
-}
-
-
-data class DestructuredAssignment(val assignments: List<FieldAssignmentExpression>) : ValueAssignment {
-   override fun asTaxi(): String {
-      return assignments.joinToString("\n") { it.asTaxi() }
-   }
-
-   // TODO -- Not sure how to model this, since through destructing there's actually
-   // multiple types here.
-   override val type: Type = PrimitiveType.ANY
-}
-
-// TODO : Can FieldReferenceSelector, ReferenceAssignment and ReferenceCaseMatchExpression all be merged?
-data class ReferenceAssignment(val reference: String, override val type: Type) : ValueAssignment {
-   companion object {
-      fun fromField(field: Field): ReferenceAssignment {
-         return ReferenceAssignment(field.name, field.type)
-      }
-   }
-
-   override fun asTaxi(): String = reference
-}
-
-data class LiteralAssignment(val value: Any) : ValueAssignment {
-   private val accessor = LiteralAccessor(value)
-
-   override fun asTaxi(): String = accessor.asTaxi()
-   override val type: Type = accessor.returnType
-}
-
-data class EnumValueAssignment(val enum: EnumType, val enumValue: EnumValue) : ValueAssignment {
-   override fun asTaxi(): String = "${enum.qualifiedName}.${enumValue.name}"
-   override val type: Type = enum
-}
-
-object NullAssignment : ValueAssignment {
-   override fun asTaxi(): String = "null"
-
-   // TODO : Can we infer the type better?
-   override val type: Type = PrimitiveType.ANY
-}
-
-data class ModelAttributeTypeReferenceAssignment(val source: QualifiedName, override val type: Type) : ValueAssignment {
-   override fun asTaxi(): String = "${source}.${type.qualifiedName}"
-}
-*/
