@@ -8,6 +8,7 @@ import lang.taxi.messages.Severity
  * These options control various aspects of compilation behavior,
  * including error severity levels and validation rules.
  */
+@kotlinx.serialization.Serializable
 data class CompilerOptions(
    /**
     * Specifies the severity level for duplicate type and service definitions.
@@ -28,5 +29,11 @@ data class CompilerOptions(
        * Default compiler options with standard settings.
        */
       val DEFAULT = CompilerOptions()
+
+      fun merge(a: CompilerOptions, b: CompilerOptions): CompilerOptions {
+         return CompilerOptions(
+            duplicateDefinitionSeverity = minOf(a.duplicateDefinitionSeverity, b.duplicateDefinitionSeverity)
+         )
+      }
    }
 }
