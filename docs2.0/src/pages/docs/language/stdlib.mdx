@@ -1136,6 +1136,57 @@ This can be useful if trying to compare values ignoring their type.
 Not supported for calling on an object (or array of objects), as Taxi's type system
 is structural, and needs to know the structure of the type it's operating on.
 
+## Parsing
+
+Functions for converting between types
+
+### parseJson
+`taxi.stdlib.parseJson`
+
+```taxi
+declare extension function <T> parseJson(source: String, type: Type<T>):T
+```
+
+Parses a JSON string into the specified type.
+
+This is useful when a field contains a JSON payload encoded as a string (e.g., from a message queue or API response),
+and you need to deserialize it into a structured type.
+
+Computed fields and functions on the target type are evaluated after parsing.
+
+```taxi
+model Event {
+   name : String
+   payload : String
+   parsed : Payload = parseJson(this.payload, Payload)
+}
+```
+
+#### Examples
+This example demonstrates parsing a JSON string embedded in a field into a structured type.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Address {\n   city: String\n   country: String\n}\nmodel Customer {\n   name: String\n   addressJson: String\n   address: Address = parseJson(this.addressJson, Address)\n}",
+  "query" : "given {\n   customer: Customer = {\n      name: 'Alice',\n      addressJson: '{ \"city\": \"London\", \"country\": \"UK\" }'\n   }\n}\nfind {\n   name: customer.name\n   address: customer.address\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"name\": \"Alice\",\n               \"address\": {\n                  \"city\": \"London\",\n                  \"country\": \"UK\"\n               }\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+This example shows that computed fields on the target type are evaluated after parsing.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Payload {\n   message: String\n   upperMessage: String = this.message.upperCase()\n}\nmodel Event {\n   name: String\n   payload: String\n   parsed: Payload = parseJson(this.payload, Payload)\n}",
+  "query" : "given {\n   event: Event = {\n      name: 'greeting',\n      payload: '{ \"message\": \"hello world\" }'\n   }\n}\nfind {\n   name: event.name\n   parsed: event.parsed\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"name\": \"greeting\",\n               \"parsed\": {\n                  \"message\": \"hello world\",\n                  \"upperMessage\": \"HELLO WORLD\"\n               }\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
 ## Errors
 
 Functions for creating and handling errors

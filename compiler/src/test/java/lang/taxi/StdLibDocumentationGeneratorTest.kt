@@ -12,6 +12,7 @@ import lang.taxi.functions.stdlib.Functional
 import lang.taxi.functions.stdlib.Math
 import lang.taxi.functions.stdlib.HasRunnableExamples
 import lang.taxi.functions.stdlib.ObjectFunctions
+import lang.taxi.functions.stdlib.Parsers
 import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.functions.stdlib.Strings
 import lang.taxi.functions.stdlib.Transformations
@@ -61,6 +62,7 @@ class StdLibDocumentationGeneratorTest : DescribeSpec({
          .appendSection("Aggregations", "Functions for aggregating data within transformations.", Aggregations.functions)
          .appendSection("Functional", "Functions that are functionally functions. Funky", Functional.functions)
          .appendSection("Transformations", "Functions for converting between types", Transformations.functions)
+         .appendSection("Parsing", "Functions for converting between types", Parsers.functions)
          .appendSection("Errors", "Functions for creating and handling errors", Errors.functions)
          .generate()
 
