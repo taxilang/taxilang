@@ -40,6 +40,11 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>org.jetbrains.kotlinx</groupId>
+         <artifactId>kotlinx-serialization-json</artifactId>
+         <version>1.7.3</version>
+      </dependency>
+      <dependency>
          <groupId>com.google.guava</groupId>
          <artifactId>guava</artifactId>
       </dependency>
@@ -122,6 +127,23 @@
    </dependencies>
    <build>
       <plugins>
+         <plugin>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-maven-plugin</artifactId>
+            <version>${kotlin.version}</version>
+            <dependencies>
+               <dependency>
+                  <groupId>org.jetbrains.kotlin</groupId>
+                  <artifactId>kotlin-maven-serialization</artifactId>
+                  <version>${kotlin.version}</version>
+               </dependency>
+            </dependencies>
+            <configuration>
+               <compilerPlugins>
+                  <plugin>kotlinx-serialization</plugin>
+               </compilerPlugins>
+            </configuration>
+         </plugin>
          <plugin>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-maven-plugin</artifactId>
