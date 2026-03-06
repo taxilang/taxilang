@@ -37,6 +37,64 @@ class StdLibDocumentationGeneratorTest : DescribeSpec({
       // Verify that the returned JSON matches the expected json (using a JSON matcher, not using string equivalence)
    }
 
+   it("generates stdlib summary and individual function docs") {
+      val schema = """""".compiled()
+
+      val writer = StdLibSummaryWriter(schema)
+         .appendSection("Strings", "A collection of functions for manipulating strings", Strings.functions)
+         .appendSection("Collections", "A collection of functions for operating on collections", Collections.functions)
+         .appendSection("Dates", "Mess about with time. Flux capacitor not included", Dates.functions)
+         .appendSection("Math", "Numbers 'n' such. Maths for the brits.", Math.functions)
+         .appendSection("Objects", "Utilities for dealing with equality, etc", ObjectFunctions.functions)
+         .appendSection("Enums", "Utilities for enums", EnumFunctions.functions)
+         .appendSection("Aggregations", "Functions for aggregating data within transformations.", Aggregations.functions)
+         .appendSection("Functional", "Functions that are functionally functions. Funky", Functional.functions)
+         .appendSection("Transformations", "Functions for converting between types", Transformations.functions)
+         .appendSection("Parsing", "Functions for converting between types", Parsers.functions)
+         .appendSection("Errors", "Functions for creating and handling errors", Errors.functions)
+
+      val summaryFile = docPath("stdlib-summary.md").toFile()
+      summaryFile.writeText(writer.generateSummary())
+      log().info("Wrote stdlib summary to ${summaryFile.absolutePath}")
+
+      val stdlibDir = docPath("stdlib").toFile()
+      stdlibDir.mkdirs()
+      val functionDocs = writer.generateFunctionDocs()
+      functionDocs.forEach { (fileName, content) ->
+         stdlibDir.resolve(fileName).writeText(content)
+      }
+      log().info("Wrote ${functionDocs.size} function docs to ${stdlibDir.absolutePath}")
+   }
+
+   it("generates stdlib documentation status report") {
+      val allFunctions = listOf(
+         Strings.functions,
+         Collections.functions,
+         Dates.functions,
+         Math.functions,
+         ObjectFunctions.functions,
+         EnumFunctions.functions,
+         Aggregations.functions,
+         Functional.functions,
+         Transformations.functions,
+         Parsers.functions,
+         Errors.functions
+      ).flatten()
+
+      val header = """# Stdlib Documentation Status
+
+| Function | Status |
+|----------|--------|
+"""
+      val rows = allFunctions
+         .sortedBy { it.name.fullyQualifiedName }
+         .joinToString("\n") { "| `${it.name.fullyQualifiedName}` | Awaiting Review |" }
+
+      val file = docPath("stdlib-doc-status.md").toFile()
+      file.writeText(header + rows + "\n")
+      log().info("Wrote stdlib documentation status to ${file.absolutePath}")
+   }
+
    it("generates docs for the stdlib") {
 //      Strings.functions +
 //      Aggregations.functions +

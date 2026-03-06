@@ -12,6 +12,18 @@ object Aggregations {
 }
 
 object SumOver: FunctionApi {
-   override val taxi: String = "declare query function sumOver(Any...):Decimal"
+   override val taxi: String = """
+      [[
+      A Vyne-specific aggregate function used in analytical queries to compute a running or grouped sum.
+
+      Used in `sumOver` window-style queries where values are aggregated across a result set.
+
+      ```taxi
+      find { orders: Order[] } as {
+         totalRevenue: Decimal = sumOver(Amount)
+      }
+      ```
+      ]]
+      declare query function sumOver(Any...):Decimal""".trimIndent()
    override val name: QualifiedName = Aggregations.aggregationLibName("sumOver")
 }
