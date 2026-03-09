@@ -10,6 +10,7 @@ import lang.taxi.expressions.ProjectingExpression
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
+import lang.taxi.utils.memoizedProperty
 import lang.taxi.utils.quotedIfNecessary
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KProperty1
@@ -239,11 +240,13 @@ data class ObjectType(
    override val anonymous: Boolean
       get() = this.definition?.isAnonymous ?: false
 
-   override val referencedTypes: List<Type>
-      get() {
-         return collectReferencedTypes(mutableSetOf())
-            .toList()
-      }
+   private val _referencedTypes = memoizedProperty({definition}) {
+      collectReferencedTypes(mutableSetOf()).toList()
+   }
+
+   // Defers access to the memorized property of referenced types
+   // via a kotlin delegate
+   override val referencedTypes: List<Type> by _referencedTypes
 
    private fun collectReferencedTypes(set: MutableSet<Type>): MutableSet<Type> {
       val inheritedTypes = this.definition?.inheritsFrom?.toList() ?: emptyList()
