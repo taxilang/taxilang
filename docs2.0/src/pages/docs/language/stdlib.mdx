@@ -303,8 +303,8 @@ type IsVerified inherits Boolean by anyOf(HasEmailVerification, HasPhoneVerifica
 This example demonstrates how to use `anyOf()` to verify if a user meets any of several verification criteria.
 
 <PlaygroundSnippet scenario={{
-  "schema" : "model User {\n   name: String\n   hasEmailVerification: Boolean\n   hasPhoneVerification: Boolean\n   hasIdVerification: Boolean\n}\ntype IsVerified inherits Boolean by anyOf(hasEmailVerification, hasPhoneVerification, hasIdVerification)",
-  "query" : "given {\n   user: User = {\n      name: 'Alice',\n      hasEmailVerification: false,\n      hasPhoneVerification: true,\n      hasIdVerification: false\n   }\n}\nfind {\n   name: user.name\n   isVerified: anyOf(user.hasEmailVerification, user.hasPhoneVerification, user.hasIdVerification)\n}",
+  "schema" : "model User {\n   name: Name inherits String\n   hasEmailVerification: HasEmailVerification inherits Boolean\n   hasPhoneVerification: HasPhoneVerification inherits Boolean\n   hasIdVerification: HasIdVerification inherits Boolean\n}\ntype IsVerified inherits Boolean by anyOf(HasEmailVerification, HasPhoneVerification, HasIdVerification)",
+  "query" : "given {\n   user: User = {\n      name: 'Alice',\n      hasEmailVerification: false,\n      hasPhoneVerification: true,\n      hasIdVerification: false\n   }\n}\nfind {\n   name: Name\n   isVerified: IsVerified\n}",
   "parameters" : { },
   "stubs" : [ ],
   "expectedJson" : "{\n               \"name\": \"Alice\",\n               \"isVerified\": true\n            }",
@@ -743,8 +743,8 @@ type NoPermissions inherits Boolean by noneOf(IsAdmin, IsEditor, IsViewer)
 This example demonstrates how to use `noneOf()` to verify if a user lacks all specified roles.
 
 <PlaygroundSnippet scenario={{
-  "schema" : "model User {\n   username: String\n   isAdmin: Boolean\n   isEditor: Boolean\n   isViewer: Boolean\n}\ntype HasNoAccess inherits Boolean by noneOf(isAdmin, isEditor, isViewer)",
-  "query" : "given {\n   user: User = {\n      username: 'GuestUser',\n      isAdmin: false,\n      isEditor: false,\n      isViewer: false\n   }\n}\nfind {\n   username: user.username\n   noAccess: noneOf(user.isAdmin, user.isEditor, user.isViewer)\n}",
+  "schema" : "model User {\n   username: Name inherits String\n   isAdmin: IsAdmin inherits Boolean\n   isEditor: IsEditor inherits Boolean\n   isViewer: IsViewer inherits Boolean\n}\ntype HasNoAccess inherits Boolean by noneOf(IsAdmin, IsEditor, IsViewer)",
+  "query" : "given {\n   user: User = {\n      username: 'GuestUser',\n      isAdmin: false,\n      isEditor: false,\n      isViewer: false\n   }\n}\nfind {\n   username: Name\n   noAccess: HasNoAccess\n}",
   "parameters" : { },
   "stubs" : [ ],
   "expectedJson" : "{\n               \"username\": \"GuestUser\",\n               \"noAccess\": true\n            }",
