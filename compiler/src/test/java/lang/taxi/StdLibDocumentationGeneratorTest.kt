@@ -49,35 +49,6 @@ class StdLibDocumentationGeneratorTest : DescribeSpec({
       log().info("Wrote ${functionDocs.size} function docs to ${stdlibDir.absolutePath}")
    }
 
-   it("generates stdlib documentation status report") {
-      val allFunctions = listOf(
-         Strings.functions,
-         Collections.functions,
-         Dates.functions,
-         Math.functions,
-         ObjectFunctions.functions,
-         EnumFunctions.functions,
-         Aggregations.functions,
-         Functional.functions,
-         Transformations.functions,
-         Parsers.functions,
-         Errors.functions
-      ).flatten()
-
-      val header = """# Stdlib Documentation Status
-
-| Function | Status |
-|----------|--------|
-"""
-      val rows = allFunctions
-         .sortedBy { it.name.fullyQualifiedName }
-         .joinToString("\n") { "| `${it.name.fullyQualifiedName}` | Awaiting Review |" }
-
-      val file = docPath("stdlib-doc-status.md").toFile()
-      file.writeText(header + rows + "\n")
-      log().info("Wrote stdlib documentation status to ${file.absolutePath}")
-   }
-
    it("generates docs for the stdlib") {
 //      Strings.functions +
 //      Aggregations.functions +
