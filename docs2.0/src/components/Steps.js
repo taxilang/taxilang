@@ -171,7 +171,7 @@ function Code({ code, lang, pad, className }) {
   )
 }
 
-export function Snippet({ code, highlightedCode, className }) {
+export function Snippet({ code, highlightedCode, className = ''}) {
   if (Array.isArray(code)) {
     return (
       <div>
