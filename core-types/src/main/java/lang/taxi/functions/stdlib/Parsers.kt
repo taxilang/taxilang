@@ -32,8 +32,9 @@ object ParseJson : FunctionApi, HasRunnableExamples {
    override val name: QualifiedName = stdLibName("parseJson")
 
    override val examples: List<DocsSnippet> = listOf(
+      // playgroundUrl: http://192.168.5.236:9500/?enableDevTools=true#pako:H4sIAAAAAAAA/42Qu04DMRBFf8WaZkGy8gGWUkRUPDpEhSnMekgMu+NgexGR5X/Hj92wkSjoPHce91xH8P0BRwUCRqtxYDutHXrPoiTGehNOgj0GZ2hfaztRcCspSWprN5MPdkTX9kiNuN5T7eidt/SHLM6mW3ZUzmOZuwoH4zerRb5MXWdb4PA5oTtl7L35QppxZwjxi7NtnQWp2w2mx4437QKri0xCCSxB5NeDJW1JAi9qi90aT/cSWOrKhVQ/4M2QXsdeKDalvIh57sxKC5Ij58GAzoOIiYMP02t+Pr9wwO8j9gF1IcxRo4R6s3LUJI1vOZf1+O8MqXj7oPqPWw2CpmHIKM6+Z8NWph9RZDBLHAIAAA==
       DocsSnippet(
-         markdown = """This example demonstrates parsing a JSON string embedded in a field into a structured type.""",
+         markdown = "Parses a JSON string embedded in a model field into a structured type.",
          query = StubQueryMessage(
             schema = """
                model Address {
@@ -58,53 +59,7 @@ object ParseJson : FunctionApi, HasRunnableExamples {
                   address: customer.address
                }
             """.trimIndent(),
-            // Cannot assert yet, as this function is not deployed -- this can be uncommented now if you're reading this,
-            // but need to wait for the new function deployed on playground
-//            expectedJson = """{
-//               "name": "Alice",
-//               "address": {
-//                  "city": "London",
-//                  "country": "UK"
-//               }
-//            }"""
-         )
-      ),
-      DocsSnippet(
-         markdown = """This example shows that computed fields on the target type are evaluated after parsing.""",
-         query = StubQueryMessage(
-            schema = """
-               model Payload {
-                  message: String
-                  upperMessage: String = this.message.upperCase()
-               }
-               model Event {
-                  name: String
-                  payload: String
-                  parsed: Payload = parseJson(this.payload, Payload)
-               }
-            """.trimIndent(),
-            query = """
-               given {
-                  event: Event = {
-                     name: 'greeting',
-                     payload: '{ "message": "hello world" }'
-                  }
-               }
-               find {
-                  name: event.name
-                  parsed: event.parsed
-               }
-            """.trimIndent(),
-            // Cannot assert yet, as this function is not deployed -- this can be uncommented now if you're reading this,
-            // but need to wait for the new function deployed on playground
-
-//            expectedJson = """{
-//               "name": "greeting",
-//               "parsed": {
-//                  "message": "hello world",
-//                  "upperMessage": "HELLO WORLD"
-//               }
-//            }"""
+            expectedJson = """{"name": "Alice", "address": {"city": "London", "country": "UK"}}"""
          )
       )
    )
