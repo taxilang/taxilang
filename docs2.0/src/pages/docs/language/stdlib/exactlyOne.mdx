@@ -1,0 +1,45 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: exactlyOne
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.exactlyOne`
+
+## Signature
+
+```taxi
+declare extension function <T> exactlyOne(collection:T[]):T
+```
+
+## Description
+
+Returns the only item from the provided collection, or throws an error if there isn't exactly one item in the collection.
+
+This function is useful when you expect a collection to contain precisely one element and want to retrieve it.
+
+```taxi
+// Get the single active session for a user
+find { user: User } as {
+   currentSession: user.sessions.filter((session) -> session.isActive).exactlyOne()
+}
+```
+
+## Examples
+
+This example demonstrates how to use `exactlyOne()` to retrieve the single active session for a user.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Session {\n   id: SessionId inherits String\n   isActive: IsActive inherits Boolean\n}\n\nmodel User {\n   username: Username inherits String\n   sessions: Session[]\n}",
+  "query" : "given {\n   user: User = {\n      username: 'ActiveUser',\n      sessions: [\n         { id: 'session-1', isActive: true },\n         { id: 'session-2', isActive: false }\n      ]\n   }\n}\nfind {\n   username: user.username\n   activeSessionId: SessionId = user.sessions.filter((Session) -> IsActive).exactlyOne().id\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"username\": \"ActiveUser\",\n               \"activeSessionId\": \"session-1\"\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

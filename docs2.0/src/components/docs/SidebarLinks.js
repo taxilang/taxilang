@@ -23,7 +23,7 @@ export const SidebarLinks = [
       {title: 'Mutations', href: '/docs/taxiql/mutations'},
       {title: 'Functions', href: '/docs/taxiql/functions'},
       {title: 'Expressions', href: '/docs/taxiql/expressions-traversal'},
-      {title: 'Taxi Stdlib', href: '/docs/language/stdlib'},
+      {title: 'Taxi Stdlib', href: '/docs/language/stdlib-summary'},
     ],
   },
   {

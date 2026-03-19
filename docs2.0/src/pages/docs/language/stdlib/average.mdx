@@ -1,0 +1,45 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: average
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.average`
+
+## Signature
+
+```taxi
+declare extension function average(values: Any[]):Decimal
+```
+
+## Description
+
+Returns the arithmetic mean of a collection of numeric values.
+
+All values in the collection must be of the same numeric primitive type (Int, Decimal, etc.).
+Returns null if the collection is empty or contains non-numeric values.
+
+```taxi
+find { order: Order } as {
+   averageItemPrice: Decimal = order.items.map((Item) -> Item::price).average()
+}
+```
+
+## Examples
+
+Computes the average score from a collection of items.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Item {\n   score: Score inherits Decimal\n}",
+  "query" : "given {\n   items: Item[] = [\n      { score: 80.0 },\n      { score: 90.0 },\n      { score: 70.0 }\n   ]\n}\nfind {\n   avg: Decimal = average(items.map((item: Item) -> item.score))\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"avg\": 80.0}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

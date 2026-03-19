@@ -1,0 +1,44 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: append
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.append`
+
+## Signature
+
+```taxi
+declare extension function <T> append(array1: T[], array2: T[]):T[]
+```
+
+## Description
+
+Returns a new collection containing the elements of the first array followed by the elements of the second array.
+
+Neither input array is modified.
+
+```taxi
+find { cart: ShoppingCart } as {
+   allItems: cart.regularItems.append(cart.saleItems)
+}
+```
+
+## Examples
+
+Concatenates two arrays, returning a new array with elements of the first followed by elements of the second.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Bag {\n   items: String[]\n}",
+  "query" : "given {\n   bag1: Bag = { items: ['apple', 'banana'] },\n   bag2: Bag = { items: ['cherry', 'date'] }\n}\nfind {\n   combined: String[] = bag1.items.append(bag2.items)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"combined\": [\"apple\", \"banana\", \"cherry\", \"date\"]}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

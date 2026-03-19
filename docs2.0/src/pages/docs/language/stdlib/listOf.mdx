@@ -1,0 +1,45 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: listOf
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.listOf`
+
+## Signature
+
+```taxi
+declare function <T> listOf(values:T...):T[]
+```
+
+## Description
+
+Creates and returns an array containing all the provided values.
+
+This function is useful for creating collections inline without having to define them separately.
+
+```taxi
+// Create a list of allowed status values
+find { order: Order } as {
+   isValidStatus: listOf('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED').contains(order.status)
+}
+```
+
+## Examples
+
+Creates an inline collection to check if an order status is one of the valid values.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Order {\n   id: String\n   status: String\n}",
+  "query" : "given {\n   orders: Order[] = [\n      { id: 'order-1', status: 'PENDING' },\n      { id: 'order-2', status: 'SHIPPED' },\n      { id: 'order-3', status: 'CANCELED' }\n   ]\n}\nfind {\n   validOrders: Order[] = orders.filter((order:Order) ->\n      listOf('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED').contains(order.status)\n   )\n   invalidOrders: Order[] = orders.filter((order:Order) ->\n      listOf('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED').contains(order.status) == false\n   )\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"validOrders\": [\n                  {\n                     \"id\": \"order-1\",\n                     \"status\": \"PENDING\"\n                  },\n                  {\n                     \"id\": \"order-2\",\n                     \"status\": \"SHIPPED\"\n                  }\n               ],\n               \"invalidOrders\": [\n                  {\n                     \"id\": \"order-3\",\n                     \"status\": \"CANCELED\"\n                  }\n               ]\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

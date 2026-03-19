@@ -19,32 +19,43 @@ class StdLibSummaryWriter(private val schema: TaxiDocument) {
    }
 
    fun generateSummary(): String {
-      val preamble = """# Taxi Standard Library
+      val preamble = """---
+IMPORTANT: This file is generated.  Do not edit manually.  For the preamble, edit stdlib.mdx in compiler/src/test/resource. All other content is generated directly from classes
 
-> **IMPORTANT:** This file is generated. Do not edit manually.
+title: Taxi StdLib
+description: Reference documentation on functions provided in Taxi's StdLib packages
+---
 
 The Taxi Standard Library provides a collection of built-in functions for common operations
 including string manipulation, date handling, math, collections, and more.
 
-| Function | Signature | Description | Docs |
-|----------|-----------|-------------|------|
 """
-      val rows = sections.flatMap { section ->
-         section.functions.sortedBy { it.name.typeName }.map { functionApi ->
+      val sectionStrings = sections.map { section ->
+
+         val sectionHeader = """## ${section.title}
+               |
+               |${section.preamble}
+               |
+               || Function | Description |
+               ||----------|-------------|
+            """.trimMargin()
+         val sectionTable = section.functions.sortedBy { it.name.typeName }.joinToString("\n") { functionApi ->
             val function = schema.function(functionApi.name.fullyQualifiedName)
             val signature = extractSignature(functionApi)
             val description = extractShortDescription(function?.typeDoc)
             val link = "./stdlib/${functionApi.name.typeName}"
-            "| `${functionApi.name.typeName}` | `$signature` | $description | [Docs]($link) |"
+            "| [`${functionApi.name.typeName}`]($link) | `$signature`<br /> $description |"
          }
+         sectionHeader + "\n" +sectionTable
+
       }
-      return preamble + rows.joinToString("\n") + "\n"
+      return preamble + sectionStrings.joinToString("\n") + "\n"
    }
 
    fun generateFunctionDocs(): Map<String, String> {
       return sections.flatMap { section ->
          section.functions.map { functionApi ->
-            val fileName = "${functionApi.name.typeName}.md"
+            val fileName = "${functionApi.name.typeName}.mdx"
             val content = generateFunctionPage(functionApi, section.title)
             fileName to content
          }
@@ -56,7 +67,7 @@ including string manipulation, date handling, math, collections, and more.
       val taxiWithoutTypeDoc = extractTaxiWithoutTypeDoc(functionApi)
 
       val runnableSnippets = if (functionApi is HasRunnableExamples) {
-         functionApi.examples.joinToString("\n\n", prefix = "#### Examples\n\n") { example ->
+         functionApi.examples.joinToString("\n\n", prefix = "## Examples\n\n") { example ->
             val queryJson = jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(example.query)
             """
 ${example.markdown}
@@ -67,11 +78,17 @@ ${example.markdown}
          }
       } else ""
 
-      return """<!-- IMPORTANT: This file is generated. Do not edit manually. -->
+      return """
+---
+IMPORTANT: This file is generated. Do not edit manually.
 
-# ${functionApi.name.typeName}
+title: ${functionApi.name.typeName}
+---
 
-**Section:** $sectionTitle
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
 **Full name:** `${functionApi.name.fullyQualifiedName}`
 
 ## Signature
@@ -85,9 +102,7 @@ $taxiWithoutTypeDoc
 ${function?.typeDoc?.trim() ?: "_No description available._"}
 
 $runnableSnippets
----
 
-[← Back to stdlib summary](../stdlib-summary)
 """.trimStart()
    }
 
@@ -150,7 +165,7 @@ $functions
 
       val runnableSnippets = if (functionApi is HasRunnableExamples) {
 
-         functionApi.examples.joinToString("\n\n", prefix = "#### Examples\n") { example ->
+         functionApi.examples.joinToString("\n\n", prefix = "### Examples\n") { example ->
             val queryJson = jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(example.query)
             """
 ${example.markdown}

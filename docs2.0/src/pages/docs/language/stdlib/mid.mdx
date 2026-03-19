@@ -1,0 +1,44 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: mid
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.mid`
+
+## Signature
+
+```taxi
+declare extension function mid(source: String, startIndex: Int, endIndex: Int):String
+```
+
+## Description
+
+Returns the middle of a string, starting at `startIndex` (inclusive) and ending just before `endIndex` (exclusive).
+
+Uses zero-based indexing, identical to `String.substring()` in Java/Kotlin.
+
+```taxi
+find { order: Order } as {
+   yearPart: String = order.isoDate.mid(0, 4)
+}
+```
+
+## Examples
+
+Extracts a substring using a zero-based start index (inclusive) and end index (exclusive).
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   mid5: String = mid('HelloWorld', 5, 10)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"mid5\": \"World\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

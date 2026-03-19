@@ -1,0 +1,45 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: any
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.any`
+
+## Signature
+
+```taxi
+declare extension function <T> any(collection: T[], predicate: (T) -> Boolean): Boolean
+```
+
+## Description
+
+Returns `true` if at least one item in the collection satisfies the predicate, or `false` if none do.
+
+Returns `false` for an empty collection.
+
+```taxi
+// Check whether any order in a batch is flagged
+find { batch: OrderBatch } as {
+   needsAttention: Boolean = batch.orders.any((order) -> order.isFlagged)
+}
+```
+
+## Examples
+
+Returns `true` when at least one item satisfies the predicate.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Task {\n   name: String\n   isComplete: Boolean\n}",
+  "query" : "given {\n   tasks: Task[] = [\n      { name: 'Setup', isComplete: true },\n      { name: 'Build', isComplete: false },\n      { name: 'Deploy', isComplete: false }\n   ]\n}\nfind {\n   anyDone: Boolean = tasks.any((task: Task) -> task.isComplete)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"anyDone\": true}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

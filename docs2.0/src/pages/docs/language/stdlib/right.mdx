@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: right
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.right`
+
+## Signature
+
+```taxi
+declare extension function right(source:String, count:Int):String
+```
+
+## Description
+
+Returns the rightmost `count` characters from a string.
+
+```taxi
+find { account: Account } as {
+   suffix: String = account.code.right(4)
+}
+```
+
+## Examples
+
+Extracts the last N characters from a string.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   lastFive: String = right('HelloWorld', 5)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"lastFive\": \"World\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

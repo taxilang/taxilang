@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: startsWith
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.startsWith`
+
+## Signature
+
+```taxi
+declare extension function startsWith(source: String, valueToSearchFor:String):Boolean
+```
+
+## Description
+
+Returns `true` if `source` begins with the specified prefix. The match is case-sensitive.
+
+```taxi
+find { files: File[] } as {
+   tempFiles: File[] = files.filter((File) -> FileName.startsWith('tmp_'))
+}
+```
+
+## Examples
+
+Returns `true` when the string begins with the specified prefix, case-sensitively.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   hasPrefix: Boolean = 'Hello World'.startsWith('Hello')\n   noMatch: Boolean = 'Hello World'.startsWith('World')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"hasPrefix\": true, \"noMatch\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

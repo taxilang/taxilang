@@ -1,0 +1,44 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: round
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.round`
+
+## Signature
+
+```taxi
+declare extension function round(value: Decimal, precision: Int = 0): Decimal
+```
+
+## Description
+
+Rounds a decimal value to the specified number of decimal places.
+
+`precision` defaults to `0` (round to nearest integer).
+
+```taxi
+find { measurement: Measurement } as {
+   rounded: Decimal = measurement.value.round(2)
+}
+```
+
+## Examples
+
+Rounds a decimal to the specified number of decimal places.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   rounded2: Decimal = round(3.14159, 2)\n   rounded0: Decimal = round(3.7, 0)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"rounded2\": 3.14, \"rounded0\": 4.0}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

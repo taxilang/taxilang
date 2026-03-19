@@ -1,0 +1,45 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: contains
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.contains`
+
+## Signature
+
+```taxi
+declare extension function <T> contains(collection: T[], searchTarget:T): Boolean
+```
+
+## Description
+
+Returns `true` if the collection contains the specified search target element.
+
+This function checks whether a given element exists within an array or collection.
+
+```taxi
+// Check if a user's roles include admin privileges
+find { user: User } as {
+   hasAdminAccess: user.roles.contains("ADMIN")
+}
+```
+
+## Examples
+
+Checks whether a collection contains a specific element using type-based access.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "type Role inherits String\nmodel User {\n   username: Username inherits String\n   roles: Role[]\n}",
+  "query" : "given {\n   user: User = {\n      username: 'AdminUser',\n      roles: ['USER', 'EDITOR', 'ADMIN']\n   }\n}\nfind {\n   username: Username\n   isAdmin: Boolean = Role[].contains('ADMIN')\n   isGuest: Boolean = Role[].contains('GUEST')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"username\": \"AdminUser\", \"isAdmin\": true, \"isGuest\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

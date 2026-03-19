@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: length
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.length`
+
+## Signature
+
+```taxi
+declare extension function length(String):Int
+```
+
+## Description
+
+Returns the number of characters in the string.
+
+```taxi
+find { message: Message } as {
+   charCount: Int = message.body.length()
+}
+```
+
+## Examples
+
+Returns the character count of a string.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   len: Int = length('Hello')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"len\": 5}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

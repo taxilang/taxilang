@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: indexOf
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.indexOf`
+
+## Signature
+
+```taxi
+declare extension function indexOf(source:String, valueToSearchFor:String):Int
+```
+
+## Description
+
+Returns the zero-based index of `valueToSearchFor` within `source`, or `-1` if not found.
+
+```taxi
+find { path: FilePath } as {
+   dotPosition: Int = path.value.indexOf('.')
+}
+```
+
+## Examples
+
+Returns the index of a substring within a string, or `-1` if not found.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   pos: Int = indexOf('Hello World', 'World')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"pos\": 6}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

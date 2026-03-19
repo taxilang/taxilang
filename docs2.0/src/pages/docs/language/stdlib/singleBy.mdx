@@ -1,0 +1,46 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: singleBy
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.singleBy`
+
+## Signature
+
+```taxi
+declare extension function <T,A> singleBy(collection:T[], groupingFunction: (T) -> A, searchValue: A):T
+```
+
+## Description
+
+Returns the item from a collection where the value returned by the grouping function matches the search value.
+
+Similar to `single()`, but results are first grouped by the selector function, and these results are cached
+to improve future performance when querying the same collection multiple times.
+
+```taxi
+// Find a product by its SKU code using a cached search
+find { inventory: Inventory } as {
+   appleMacbook: inventory.products.singleBy((product) -> product.sku, "MB-PRO-2023")
+}
+```
+
+## Examples
+
+Looks up products by SKU using a cached index. Faster than `single()` when querying the same collection multiple times.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Product {\n   name: Name inherits String\n   sku: SKU inherits String\n}\nmodel Inventory {\n   products: Product[]\n}",
+  "query" : "given {\n   inventory: Inventory = {\n      products: [\n         { name: 'Laptop', sku: 'LT-001' },\n         { name: 'Smartphone', sku: 'SP-002' },\n         { name: 'Tablet', sku: 'TB-003' }\n      ]\n   }\n}\nfind {\n   laptop: inventory.products.singleBy((Product) -> SKU, 'LT-001' as SKU)\n   tablet: inventory.products.singleBy((Product) -> SKU, 'TB-003' as SKU)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"laptop\": {\"name\": \"Laptop\", \"sku\": \"LT-001\"}, \"tablet\": {\"name\": \"Tablet\", \"sku\": \"TB-003\"}}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: isNullOrEmpty
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.isNullOrEmpty`
+
+## Signature
+
+```taxi
+declare extension function <T> isNullOrEmpty(collection:T[]):Boolean
+```
+
+## Description
+
+Returns `true` if the provided collection is either `null` or contains zero elements.
+
+```taxi
+find { order: Order } as {
+   hasNoItems: Boolean = order.items.isNullOrEmpty()
+}
+```
+
+## Examples
+
+Returns `true` for an empty collection, `false` when the collection has elements.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Bag {\n   items: String[]\n}",
+  "query" : "given {\n   emptyBag: Bag = { items: [] },\n   fullBag: Bag = { items: ['apple', 'banana'] }\n}\nfind {\n   emptyCheck: Boolean = emptyBag.items.isNullOrEmpty()\n   fullCheck: Boolean = fullBag.items.isNullOrEmpty()\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"emptyCheck\": true, \"fullCheck\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

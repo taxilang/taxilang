@@ -1,0 +1,44 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: addDays
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.dates.addDays`
+
+## Signature
+
+```taxi
+declare function <T> addDays(T, Int):T
+```
+
+## Description
+
+Adds the specified number of days to a date, datetime, or instant. Use a negative value to subtract days.
+
+```taxi
+// Calculate an expiry date 90 days from today
+find {
+   @Format("yyyy-MM-dd")
+   expiresOn: Date = addDays(Date, 90)
+}
+```
+
+## Examples
+
+Adds days to a date — positive to advance, negative to go back.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "given {\n   start: Date = parseDate(\"2024-01-15\")\n}\nfind {\n   @Format(\"yyyy-MM-dd\")\n   nextWeek: Date = addDays(Date, 7)\n   @Format(\"yyyy-MM-dd\")\n   lastMonth: Date = addDays(Date, -30)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"nextWeek\": \"2024-01-22\", \"lastMonth\": \"2023-12-16\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

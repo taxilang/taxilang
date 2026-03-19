@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: concat
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.concat`
+
+## Signature
+
+```taxi
+declare function concat(Any...):String
+```
+
+## Description
+
+Joins all provided values into a single string, in the order they are passed. Null values are omitted.
+
+```taxi
+find { person: Person } as {
+   fullName: String = concat(person.firstName, ' ', person.lastName)
+}
+```
+
+## Examples
+
+Concatenates multiple string values into a single string.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   greeting: String = concat('Hello', ', ', 'World')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"greeting\": \"Hello, World\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

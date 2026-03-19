@@ -1,0 +1,57 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: applyFormat
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.applyFormat`
+
+## Signature
+
+```taxi
+declare extension function applyFormat(input: Any, format: String):String
+```
+
+## Description
+
+Applies a format string to the input value using [Java Formatter](https://docs.oracle.com/javase/8/docs/api/java/util/Formatter.html) conventions.
+
+Accepts any value (string, number, date, etc.) as input. The format string controls width, padding, precision, and alignment.
+
+```taxi
+// Zero-pad an integer to 6 digits
+find { order: Order } as {
+   paddedId: order.id.applyFormat('%06d')
+}
+```
+
+## Examples
+
+Formats an integer with zero-padding using `%05d`.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   formatted: String = 42.applyFormat('%05d')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"formatted\": \"00042\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+Left-justifies a string in a 10-character wide field using `%-10s`.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   padded: String = 'hello'.applyFormat('%-10s')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"padded\": \"hello     \"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

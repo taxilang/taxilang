@@ -1,0 +1,45 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: last
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.last`
+
+## Signature
+
+```taxi
+declare extension function <T> last(collection: T[]):T
+```
+
+## Description
+
+Returns the last item within the collection. Throws an error if the collection is empty.
+
+This function retrieves the final element in an ordered collection.
+
+```taxi
+// Get the oldest transaction from a date-sorted list
+find { account: Account } as {
+   oldestTransaction: account.transactions.last()
+}
+```
+
+## Examples
+
+This example demonstrates how to use `last()` to retrieve the oldest transaction for an account.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Transaction {\n   date: String\n   amount: Decimal\n   description: String\n}\n\nmodel Account {\n   accountNumber: String\n   transactions: Transaction[] // Assumed to be in descending date order (newest first)\n}",
+  "query" : "given {\n   account: Account = {\n      accountNumber: 'ACC-12345',\n      transactions: [\n         { date: '2023-05-01', amount: 150.00, description: 'Grocery Store' },\n         { date: '2023-04-28', amount: 45.99, description: 'Online Shop' },\n         { date: '2023-04-25', amount: 20.00, description: 'Transfer' }\n      ]\n   }\n}\nfind {\n   accountNumber: account.accountNumber\n   // Using .last() against the type\n   oldestTransaction: Transaction =  Transaction[].last()\n   // or, alternatively, using against the property name\n   alsoOldestTransaction: Transaction = account.transactions.last()\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n   \"accountNumber\": \"ACC-12345\",\n   \"oldestTransaction\": {\n      \"date\": \"2023-04-25\",\n      \"amount\": 20,\n      \"description\": \"Transfer\"\n   },\n   \"alsoOldestTransaction\": {\n      \"date\": \"2023-04-25\",\n      \"amount\": 20,\n      \"description\": \"Transfer\"\n   }\n}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

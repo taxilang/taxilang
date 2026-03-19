@@ -6,14 +6,10 @@ import lang.taxi.functions.stdlib.Collections
 import lang.taxi.functions.stdlib.Dates
 import lang.taxi.functions.stdlib.EnumFunctions
 import lang.taxi.functions.stdlib.Errors
-import lang.taxi.functions.stdlib.DocsSnippet
-import lang.taxi.functions.stdlib.FunctionApi
 import lang.taxi.functions.stdlib.Functional
 import lang.taxi.functions.stdlib.Math
-import lang.taxi.functions.stdlib.HasRunnableExamples
 import lang.taxi.functions.stdlib.ObjectFunctions
 import lang.taxi.functions.stdlib.Parsers
-import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.functions.stdlib.Strings
 import lang.taxi.functions.stdlib.Transformations
 import lang.taxi.functions.vyne.aggregations.Aggregations
@@ -23,19 +19,6 @@ import java.nio.file.Paths
 
 
 class StdLibDocumentationGeneratorTest : DescribeSpec({
-
-   it("has working examples") {
-      val runnableExamples: List<Pair<String, List<DocsSnippet>>> =  StdLib.functions.filterIsInstance<HasRunnableExamples>()
-         .map {
-            val function = it as FunctionApi
-            val functionName = function.name.fullyQualifiedName
-            functionName to it.examples
-         }
-
-      // TODO :
-      // For each runnable example, we need to submit it to the Taxi query endpoint, which will return JSON.
-      // Verify that the returned JSON matches the expected json (using a JSON matcher, not using string equivalence)
-   }
 
    it("generates stdlib summary and individual function docs") {
       val schema = """""".compiled()
@@ -53,7 +36,7 @@ class StdLibDocumentationGeneratorTest : DescribeSpec({
          .appendSection("Parsing", "Functions for converting between types", Parsers.functions)
          .appendSection("Errors", "Functions for creating and handling errors", Errors.functions)
 
-      val summaryFile = docPath("stdlib-summary.md").toFile()
+      val summaryFile = docPath("stdlib-summary.mdx").toFile()
       summaryFile.writeText(writer.generateSummary())
       log().info("Wrote stdlib summary to ${summaryFile.absolutePath}")
 

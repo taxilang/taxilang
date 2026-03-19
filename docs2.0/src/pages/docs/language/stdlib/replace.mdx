@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: replace
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.replace`
+
+## Signature
+
+```taxi
+declare extension function replace(source: String, searchValue:String, replacement: String):String
+```
+
+## Description
+
+Replaces all occurrences of `searchValue` in `source` with `replacement`, returning a new string.
+
+```taxi
+find { order: Order } as {
+   cleanRef: String = order.reference.replace('-', '_')
+}
+```
+
+## Examples
+
+Replaces all occurrences of a substring with a new value.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   replaced: String = replace('Hello World', 'World', 'Taxi')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"replaced\": \"Hello Taxi\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

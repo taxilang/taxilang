@@ -1,0 +1,45 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: first
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.first`
+
+## Signature
+
+```taxi
+declare extension function <T> first(collection: T[]):T
+```
+
+## Description
+
+Returns the first item within the collection. Throws an error if the collection is empty.
+
+This function retrieves the first element in an ordered collection.
+
+```taxi
+// Get the most recent transaction from a sorted list
+find { account: Account } as {
+   latestTransaction: account.transactions.first()
+}
+```
+
+## Examples
+
+This example demonstrates how to use `first()` to retrieve the most recent transaction for an account.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Transaction {\n   date: String\n   amount: Decimal\n   description: String\n}\n\nmodel Account {\n   accountNumber: String\n   transactions: Transaction[] // Assumed to be in descending date order\n}",
+  "query" : "given {\n   account: Account = {\n      accountNumber: 'ACC-12345',\n      transactions: [\n         { date: '2023-05-01', amount: 150.00, description: 'Grocery Store' },\n         { date: '2023-04-28', amount: 45.99, description: 'Online Shop' },\n         { date: '2023-04-25', amount: 20.00, description: 'Transfer' }\n      ]\n   }\n}\nfind {\n   accountNumber: account.accountNumber\n   mostRecentTransaction: Transaction = account.transactions.first()\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"accountNumber\": \"ACC-12345\",\n               \"mostRecentTransaction\": {\n                  \"date\": \"2023-05-01\",\n                  \"amount\": 150.00,\n                  \"description\": \"Grocery Store\"\n               }\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

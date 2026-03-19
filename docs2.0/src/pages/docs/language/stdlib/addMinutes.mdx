@@ -1,0 +1,43 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: addMinutes
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.dates.addMinutes`
+
+## Signature
+
+```taxi
+declare function <T> addMinutes(T, Int):T
+```
+
+## Description
+
+Adds the specified number of minutes to a datetime or instant. Use a negative value to subtract minutes.
+
+```taxi
+// Schedule a meeting 30 minutes from the event start
+find {
+   meetingEnd: DateTime = addMinutes(DateTime, 30)
+}
+```
+
+## Examples
+
+Adds minutes to a datetime — positive to advance, negative to go back.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "given {\n   start: DateTime = parseDate(\"2024-01-15T10:30:00\")\n}\nfind {\n   @Format(\"yyyy-MM-dd HH:mm\")\n   plusFive: DateTime = addMinutes(DateTime, 5)\n   @Format(\"yyyy-MM-dd HH:mm\")\n   minusTwo: DateTime = addMinutes(DateTime, -120)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"plusFive\": \"2024-01-15 10:35\", \"minusTwo\": \"2024-01-15 08:30\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

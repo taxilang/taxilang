@@ -1,0 +1,35 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: fold
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.fold`
+
+## Signature
+
+```taxi
+declare extension function <T,A> fold(collection: T[], initial: A, callback: (T,A) -> A):A
+```
+
+## Description
+
+Iterates over a collection, combining elements with an accumulator to produce a single result.
+
+Unlike `reduce`, `fold` starts with an explicit `initial` value as the accumulator.
+
+```taxi
+// Compute a weighted sum
+model Entry {
+   weight: Weight inherits Int
+   score: Score inherits Int
+}
+type WeightedTotal by (Entry[]) -> Entry[].fold(0, (Entry, Int) -> Int + (Weight * Score))
+```
+
+
+

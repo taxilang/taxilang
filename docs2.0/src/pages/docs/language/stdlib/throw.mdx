@@ -1,0 +1,33 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: throw
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.throw`
+
+## Signature
+
+```taxi
+declare function throw(error:Any):Nothing
+```
+
+## Description
+
+Throws an error, halting execution. Useful for enforcing invariants inline.
+
+```taxi
+find { order: Order } as {
+   status: OrderStatus = when {
+      OrderStatus == 'INVALID' -> throw('Order status is invalid')
+      else -> OrderStatus
+   }
+}
+```
+
+
+

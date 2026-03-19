@@ -1,0 +1,44 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: padEnd
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.padEnd`
+
+## Signature
+
+```taxi
+declare extension function padEnd(input: String, length: Int, padWith: String):String
+```
+
+## Description
+
+Pads the string to the specified total `length` by appending `padWith` characters at the end.
+
+`padWith` should be a single character — if multiple characters are passed, only the first is used.
+
+```taxi
+find { product: Product } as {
+   paddedCode: String = product.code.padEnd(10, ' ')
+}
+```
+
+## Examples
+
+Pads a string to the target length by appending characters on the right.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   padded: String = padEnd('hello', 10, '.')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"padded\": \"hello.....\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

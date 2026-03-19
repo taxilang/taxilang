@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: left
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.left`
+
+## Signature
+
+```taxi
+declare extension function left(source:String, count:Int):String
+```
+
+## Description
+
+Returns the leftmost `count` characters from a string.
+
+```taxi
+find { account: Account } as {
+   prefix: String = account.code.left(3)
+}
+```
+
+## Examples
+
+Extracts the first N characters from a string.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   firstFive: String = left('HelloWorld', 5)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"firstFive\": \"Hello\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

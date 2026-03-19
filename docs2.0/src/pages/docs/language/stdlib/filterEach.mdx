@@ -1,0 +1,33 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: filterEach
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.filterEach`
+
+## Signature
+
+```taxi
+declare extension function <T> filterEach(item: T, callback: (T) -> Boolean):T?
+```
+
+## Description
+
+Evaluates the predicate against the provided item, returning the item if the predicate returns true, or null otherwise.
+
+This function is intended for use in filtering streams, where null values are automatically excluded.
+
+```taxi
+// Filter individual items in a pipeline
+find { items: Item[] } as {
+   processedItems: items.map((item) -> filterEach(item, (i) -> i.status == "READY"))
+}
+```
+
+
+

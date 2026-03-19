@@ -1,0 +1,31 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: currentDateTime
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.dates.currentDateTime`
+
+## Signature
+
+```taxi
+declare function currentDateTime():DateTime
+```
+
+## Description
+
+Returns the current local date and time.
+
+```taxi
+find {
+   @Format("yyyy-MM-dd HH:mm:ss")
+   now: DateTime = currentDateTime()
+}
+```
+
+
+

@@ -1,0 +1,47 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: collectAllInstances
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.collectAllInstances`
+
+## Signature
+
+```taxi
+declare extension function <T> collectAllInstances(collection: lang.taxi.Type<T>): T
+```
+
+## Description
+
+Collects and merges all instances of a type from the current data context, bypassing ambiguity checks.
+
+Without this function, a search for `T[]` will return null when multiple separate collections of `T` exist
+(the result is considered ambiguous). `collectAllInstances` disables that check and concatenates all found instances
+into a single collection.
+
+```taxi
+// Merge homeAddresses and workAddresses into one list
+find { person: Person } as {
+   allAddresses: collectAllInstances(Address)
+}
+```
+
+## Examples
+
+Merges all `Address` collections on a `Person` into a single flat list, even though they live in separate fields.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Address {\n   street: Street inherits String\n}\nmodel Person {\n   name: Name inherits String\n   homeAddresses: Address[]\n   workAddresses: Address[]\n}",
+  "query" : "given {\n   person: Person = {\n      name: 'Jimmy',\n      homeAddresses: [\n         { street: 'Oxford St' },\n         { street: 'Regent St' }\n      ],\n      workAddresses: [\n         { street: 'Tot St' }\n      ]\n   }\n}\nfind {\n   name: person.name\n   allAddresses: collectAllInstances(Address)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"name\": \"Jimmy\", \"allAddresses\": [{\"street\": \"Oxford St\"}, {\"street\": \"Regent St\"}, {\"street\": \"Tot St\"}]}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

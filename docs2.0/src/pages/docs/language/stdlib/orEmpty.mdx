@@ -1,0 +1,44 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: orEmpty
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.orEmpty`
+
+## Signature
+
+```taxi
+declare extension function <T> orEmpty(source:T[]): T[]
+```
+
+## Description
+
+Returns the source array unchanged if it is non-null, or an empty array if it is `null`.
+
+Useful for safely chaining collection operations on potentially-null fields.
+
+```taxi
+find { user: User } as {
+   roles: user.roles.orEmpty().joinToString(', ')
+}
+```
+
+## Examples
+
+Returns the collection unchanged when non-null. Use `.orEmpty()` to safely chain operations on nullable arrays.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Cart {\n   items: String[]\n}",
+  "query" : "given {\n   cart: Cart = { items: ['apple', 'banana'] }\n}\nfind {\n   items: String[] = cart.items.orEmpty()\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"items\": [\"apple\", \"banana\"]}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

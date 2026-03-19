@@ -1,0 +1,43 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: addSeconds
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.dates.addSeconds`
+
+## Signature
+
+```taxi
+declare function <T> addSeconds(T, Int):T
+```
+
+## Description
+
+Adds the specified number of seconds to a datetime or instant. Use a negative value to subtract seconds.
+
+```taxi
+// Expire a token 3600 seconds (1 hour) from now
+find {
+   expiresAt: Instant = addSeconds(Instant, 3600)
+}
+```
+
+## Examples
+
+Adds seconds to an instant — positive to advance, negative to go back.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "given {\n   start: Instant = parseDate(\"2024-01-15T10:30:00Z\")\n}\nfind {\n   @Format(\"yyyy-MM-dd HH:mm:ss\")\n   plusThirty: Instant = addSeconds(Instant, 30)\n   @Format(\"yyyy-MM-dd HH:mm:ss\")\n   minusTen: Instant = addSeconds(Instant, -10)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"plusThirty\": \"2024-01-15 10:30:30\", \"minusTen\": \"2024-01-15 10:29:50\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

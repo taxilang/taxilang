@@ -1,0 +1,43 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: containsString
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.containsString`
+
+## Signature
+
+```taxi
+declare extension function containsString(source:String, valueToSearchFor:String):Boolean
+```
+
+## Description
+
+Returns `true` if `source` contains `valueToSearchFor` as a substring. The match is case-sensitive.
+
+```taxi
+// Check if a description mentions a keyword
+find {
+   mentionsDiscount: Boolean = Description.containsString("discount")
+}
+```
+
+## Examples
+
+Checks for a case-sensitive substring match.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   hasSubstring: Boolean = \"hello world\".containsString(\"world\")\n   caseSensitive: Boolean = \"hello world\".containsString(\"World\")\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"hasSubstring\": true, \"caseSensitive\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

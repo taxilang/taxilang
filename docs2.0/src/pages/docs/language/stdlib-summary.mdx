@@ -1,0 +1,146 @@
+---
+IMPORTANT: This file is generated.  Do not edit manually.  For the preamble, edit stdlib.mdx in compiler/src/test/resource. All other content is generated directly from classes
+
+title: Taxi StdLib
+description: Reference documentation on functions provided in Taxi's StdLib packages
+---
+
+The Taxi Standard Library provides a collection of built-in functions for common operations
+including string manipulation, date handling, math, collections, and more.
+
+## Strings
+
+A collection of functions for manipulating strings
+
+| Function | Description |
+|----------|-------------|
+| [`applyFormat`](./stdlib/applyFormat) | `applyFormat(input: Any, format: String):String`<br /> Applies a format string to the input value using [Java Formatter](https://docs.oracle.com/javase/8/docs/api/java/util... |
+| [`concat`](./stdlib/concat) | `concat(Any...):String`<br /> Joins all provided values into a single string, in the order they are passed. |
+| [`containsPattern`](./stdlib/containsPattern) | `containsPattern(source: String, regex: String): Boolean`<br /> Returns `true` if any part of the source string matches the provided regular expression. |
+| [`containsString`](./stdlib/containsString) | `containsString(source:String, valueToSearchFor:String):Boolean`<br /> Returns `true` if `source` contains `valueToSearchFor` as a substring. |
+| [`endsWith`](./stdlib/endsWith) | `endsWith(source: String, valueToSearchFor:String):Boolean`<br /> Returns `true` if `source` ends with the specified suffix. |
+| [`indexOf`](./stdlib/indexOf) | `indexOf(source:String, valueToSearchFor:String):Int`<br /> Returns the zero-based index of `valueToSearchFor` within `source`, or `-1` if not found. |
+| [`left`](./stdlib/left) | `left(source:String, count:Int):String`<br /> Returns the leftmost `count` characters from a string. |
+| [`length`](./stdlib/length) | `length(String):Int`<br /> Returns the number of characters in the string. |
+| [`lowerCase`](./stdlib/lowerCase) | `lowerCase(String):String`<br /> Converts all characters in the string to lower case. |
+| [`matches`](./stdlib/matches) | `matches(source: String, regex: String): Boolean`<br /> Returns `true` if the **entire** source string matches the provided regular expression. |
+| [`mid`](./stdlib/mid) | `mid(source: String, startIndex: Int, endIndex: Int):String`<br /> Returns the middle of a string, starting at `startIndex` (inclusive) and ending just before `endIndex` (exclusive). |
+| [`padEnd`](./stdlib/padEnd) | `padEnd(input: String, length: Int, padWith: String):String`<br /> Pads the string to the specified total `length` by appending `padWith` characters at the end. |
+| [`padStart`](./stdlib/padStart) | `padStart(input: String, length: Int, padWith: String):String`<br /> Pads the string to the specified total `length` by prepending `padWith` characters at the start. |
+| [`replace`](./stdlib/replace) | `replace(source: String, searchValue:String, replacement: String):String`<br /> Replaces all occurrences of `searchValue` in `source` with `replacement`, returning a new string. |
+| [`right`](./stdlib/right) | `right(source:String, count:Int):String`<br /> Returns the rightmost `count` characters from a string. |
+| [`startsWith`](./stdlib/startsWith) | `startsWith(source: String, valueToSearchFor:String):Boolean`<br /> Returns `true` if `source` begins with the specified prefix. |
+| [`trim`](./stdlib/trim) | `trim(String):String`<br /> Removes leading and trailing whitespace from a string. |
+| [`upperCase`](./stdlib/upperCase) | `upperCase(String):String`<br /> Converts all characters in the string to upper case. |
+## Collections
+
+A collection of functions for operating on collections
+
+| Function | Description |
+|----------|-------------|
+| [`all`](./stdlib/all) | `<T> all(collection: T[], predicate: (T) -> Boolean): Boolean`<br /> Returns `true` if every item in the collection satisfies the predicate, or `false` if any item does not. |
+| [`allOf`](./stdlib/allOf) | `allOf(values:Boolean...): Boolean`<br /> Returns `true` only if all provided boolean values are `true`. |
+| [`any`](./stdlib/any) | `<T> any(collection: T[], predicate: (T) -> Boolean): Boolean`<br /> Returns `true` if at least one item in the collection satisfies the predicate, or `false` if none do. |
+| [`anyOf`](./stdlib/anyOf) | `anyOf(values:Boolean...): Boolean`<br /> Returns `true` if at least one of the provided boolean values is `true`. |
+| [`append`](./stdlib/append) | `<T> append(array1: T[], array2: T[]):T[]`<br /> Returns a new collection containing the elements of the first array followed by the elements of the second array. |
+| [`collectAllInstances`](./stdlib/collectAllInstances) | `<T> collectAllInstances(collection: lang.taxi.Type<T>): T`<br /> Collects and merges all instances of a type from the current data context, bypassing ambiguity checks. |
+| [`contains`](./stdlib/contains) | `<T> contains(collection: T[], searchTarget:T): Boolean`<br /> Returns `true` if the collection contains the specified search target element. |
+| [`containsAll`](./stdlib/containsAll) | `<T> containsAll(collection: T[], searchTarget:T[]): Boolean`<br /> Returns `true` if the collection contains every element in the search targets array. |
+| [`containsAny`](./stdlib/containsAny) | `<T> containsAny(collection: T[], searchTarget:T[]): Boolean`<br /> Returns `true` if the collection contains at least one of the specified search targets. |
+| [`exactlyOne`](./stdlib/exactlyOne) | `<T> exactlyOne(collection:T[]):T`<br /> Returns the only item from the provided collection, or throws an error if there isn't exactly one item in the collect... |
+| [`filter`](./stdlib/filter) | `<T> filter(collection:T[], callback: (T) -> Boolean):T[]`<br /> Returns a new collection containing only the members of the original collection that match the provided predicate. |
+| [`filterEach`](./stdlib/filterEach) | `<T> filterEach(item: T, callback: (T) -> Boolean):T?`<br /> Evaluates the predicate against the provided item, returning the item if the predicate returns true, or null otherwise. |
+| [`first`](./stdlib/first) | `<T> first(collection: T[]):T`<br /> Returns the first item within the collection. |
+| [`getAtIndex`](./stdlib/getAtIndex) | `<T> getAtIndex(collection: T[], index: Int):T`<br /> Returns the item at the provided index in the collection. |
+| [`ifEmpty`](./stdlib/ifEmpty) | `<T> ifEmpty(source:T[], defaultValue:T[]): T[]`<br /> Returns the source array if it is non-empty, otherwise returns the provided default array. |
+| [`indexOfItem`](./stdlib/indexOfItem) | `<T> indexOfItem(collection:T[], searchItem: T):Int`<br /> Returns the zero-based index of an item within a collection, or `-1` if the item was not found. |
+| [`intersection`](./stdlib/intersection) | `<T> intersection(collectionA: T[], collectionB: T[]):T[]`<br /> Returns a new collection containing only the elements that are present in both of the provided collections. |
+| [`isNullOrEmpty`](./stdlib/isNullOrEmpty) | `<T> isNullOrEmpty(collection:T[]):Boolean`<br /> Returns `true` if the provided collection is either `null` or contains zero elements. |
+| [`joinToString`](./stdlib/joinToString) | `<T> joinToString(values:T[], separator: String = ",", prefix: String? = null, postfix: String? = null): String`<br /> Creates a string from all the elements separated using `separator` and using the given `prefix` and `postfix` if supp... |
+| [`last`](./stdlib/last) | `<T> last(collection: T[]):T`<br /> Returns the last item within the collection. |
+| [`listOf`](./stdlib/listOf) | `<T> listOf(values:T...):T[]`<br /> Creates and returns an array containing all the provided values. |
+| [`none`](./stdlib/none) | `<T> none(collection: T[], predicate: (T) -> Boolean): Boolean`<br /> Returns `true` if none of the items in the collection satisfy the predicate. |
+| [`noneOf`](./stdlib/noneOf) | `noneOf(values:Boolean...): Boolean`<br /> Returns `true` only if all provided boolean values are `false`. |
+| [`orEmpty`](./stdlib/orEmpty) | `<T> orEmpty(source:T[]): T[]`<br /> Returns the source array unchanged if it is non-null, or an empty array if it is `null`. |
+| [`single`](./stdlib/single) | `<T> single(collection:T[], callback: (T) -> Boolean):T`<br /> Returns the first item from a collection that matches the provided predicate. |
+| [`singleBy`](./stdlib/singleBy) | `<T,A> singleBy(collection:T[], groupingFunction: (T) -> A, searchValue: A):T`<br /> Returns the item from a collection where the value returned by the grouping function matches the search value. |
+| [`size`](./stdlib/size) | `<T> size(collection:T[]):Int`<br /> Returns the number of elements in the collection. |
+## Dates
+
+Mess about with time. Flux capacitor not included
+
+| Function | Description |
+|----------|-------------|
+| [`addDays`](./stdlib/addDays) | `<T> addDays(T, Int):T`<br /> Adds the specified number of days to a date, datetime, or instant. |
+| [`addMinutes`](./stdlib/addMinutes) | `<T> addMinutes(T, Int):T`<br /> Adds the specified number of minutes to a datetime or instant. |
+| [`addSeconds`](./stdlib/addSeconds) | `<T> addSeconds(T, Int):T`<br /> Adds the specified number of seconds to a datetime or instant. |
+| [`currentDate`](./stdlib/currentDate) | `currentDate():Date`<br /> Returns the current local date (no time component). |
+| [`currentDateTime`](./stdlib/currentDateTime) | `currentDateTime():DateTime`<br /> Returns the current local date and time. |
+| [`currentTime`](./stdlib/currentTime) | `currentTime():Time`<br /> Returns the current local time (no date component). |
+| [`now`](./stdlib/now) | `now():Instant`<br /> Returns the current UTC instant. |
+| [`parseDate`](./stdlib/parseDate) | `<T> parseDate(String):T`<br /> Parses a string into a date, datetime, or instant value. |
+## Math
+
+Numbers 'n' such. Maths for the brits.
+
+| Function | Description |
+|----------|-------------|
+| [`average`](./stdlib/average) | `average(values: Any[]):Decimal`<br /> Returns the arithmetic mean of a collection of numeric values. |
+| [`max`](./stdlib/max) | `<T,A> max(collection: T[], callback: (T) -> A):A`<br /> Returns the maximum value in the collection, computed by applying the selector function to each element. |
+| [`min`](./stdlib/min) | `<T,A> min(collection: T[], callback: (T) -> A):A`<br /> Returns the minimum value in the collection, computed by applying the selector function to each element. |
+| [`round`](./stdlib/round) | `round(value: Decimal, precision: Int = 0): Decimal`<br /> Rounds a decimal value to the specified number of decimal places. |
+| [`sum`](./stdlib/sum) | `<T,A> sum(collection: T[], callback: (T) -> A):A`<br /> Returns the sum of values in the collection, computed by applying the selector function to each element. |
+## Objects
+
+Utilities for dealing with equality, etc
+
+| Function | Description |
+|----------|-------------|
+| [`emptyInstance`](./stdlib/emptyInstance) | `<A> emptyInstance(instanceType:lang.taxi.Type<A>): A`<br /> Returns an instance of the requested type with all fields set to their empty state: scalars are `null`, collections a... |
+| [`equals`](./stdlib/equals) | `<A,B> equals(a:A, b:B): Boolean`<br /> Returns `true` if two values are equal. |
+## Enums
+
+Utilities for enums
+
+| Function | Description |
+|----------|-------------|
+| [`enumForName`](./stdlib/enumForName) | `<T> enumForName(enumType: lang.taxi.Type<T>, enumName: String): T`<br /> Returns the enum member matching the provided value string. |
+| [`hasEnumNamed`](./stdlib/hasEnumNamed) | `<T> hasEnumNamed(enumType: lang.taxi.Type<T>, enumName: String): Boolean`<br /> Returns `true` if the enum has an explicitly declared member matching the provided name. |
+## Aggregations
+
+Functions for aggregating data within transformations.
+
+| Function | Description |
+|----------|-------------|
+| [`sumOver`](./stdlib/sumOver) | `declare query function sumOver(Any...):Decimal`<br /> A Vyne-specific aggregate function used in analytical queries to compute a running or grouped sum. |
+## Functional
+
+Functions that are functionally functions. Funky
+
+| Function | Description |
+|----------|-------------|
+| [`fold`](./stdlib/fold) | `<T,A> fold(collection: T[], initial: A, callback: (T,A) -> A):A`<br /> Iterates over a collection, combining elements with an accumulator to produce a single result. |
+| [`map`](./stdlib/map) | `<T,A> map(collection: T[], callback: (T) -> A):A[]`<br /> Applies a transformation function to every element in a collection, returning a new array of the results. |
+| [`reduce`](./stdlib/reduce) | `<T,A> reduce(collection: T[], callback: (T,A) -> A):A`<br /> Reduces a collection to a single value by applying a combining function to each element and the accumulated result. |
+## Transformations
+
+Functions for converting between types
+
+| Function | Description |
+|----------|-------------|
+| [`convert`](./stdlib/convert) | `<T> convert(source: Any, targetType: lang.taxi.Type<T>): T`<br /> Converts a source value to the target type using only the data already available — no service calls are made. |
+| [`toRawType`](./stdlib/toRawType) | `toRawType(source: Any):Any`<br /> Removes the semantic typing from a scalar value, returning it typed as its raw primitive. |
+## Parsing
+
+Functions for converting between types
+
+| Function | Description |
+|----------|-------------|
+| [`parseJson`](./stdlib/parseJson) | `<T> parseJson(source: String, type: Type<T>):T`<br /> Parses a JSON string into the specified type. |
+## Errors
+
+Functions for creating and handling errors
+
+| Function | Description |
+|----------|-------------|
+| [`throw`](./stdlib/throw) | `throw(error:Any):Nothing`<br /> Throws an error, halting execution. |

@@ -1,0 +1,45 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: none
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.none`
+
+## Signature
+
+```taxi
+declare extension function <T> none(collection: T[], predicate: (T) -> Boolean): Boolean
+```
+
+## Description
+
+Returns `true` if none of the items in the collection satisfy the predicate.
+
+Returns `true` for an empty collection (vacuous truth).
+
+```taxi
+// Check that no task is overdue
+find { sprint: Sprint } as {
+   noOverdue: Boolean = sprint.tasks.none((task) -> task.isOverdue)
+}
+```
+
+## Examples
+
+Returns `true` when no item in the collection satisfies the predicate.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Task {\n   name: String\n   isComplete: Boolean\n}",
+  "query" : "given {\n   tasks: Task[] = [\n      { name: 'Setup', isComplete: true },\n      { name: 'Build', isComplete: true },\n      { name: 'Deploy', isComplete: true }\n   ]\n}\nfind {\n   noneIncomplete: Boolean = tasks.none((task: Task) -> task.isComplete == false)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"noneIncomplete\": true}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

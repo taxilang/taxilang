@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: equals
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.equals`
+
+## Signature
+
+```taxi
+declare extension function <A,B> equals(a:A, b:B): Boolean
+```
+
+## Description
+
+Returns `true` if two values are equal. Equality is checked by value and type — values of different semantic types are not equal even if their underlying values match.
+
+```taxi
+find {
+   match: Boolean = OrderStatus.equals("PENDING")
+}
+```
+
+## Examples
+
+Compares two string values — matching pair returns true, non-matching returns false.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   same: Boolean = \"hello\".equals(\"hello\")\n   different: Boolean = \"hello\".equals(\"world\")\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"same\": true, \"different\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

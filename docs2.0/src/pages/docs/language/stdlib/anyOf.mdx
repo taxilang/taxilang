@@ -1,0 +1,43 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: anyOf
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.anyOf`
+
+## Signature
+
+```taxi
+declare function anyOf(values:Boolean...): Boolean
+```
+
+## Description
+
+Returns `true` if at least one of the provided boolean values is `true`. Equivalent to logical OR.
+
+This function evaluates multiple conditions and returns true if any of them are true.
+
+```taxi
+// Check if a user has any account verification
+type IsVerified inherits Boolean by anyOf(HasEmailVerification, HasPhoneVerification, HasIdVerification)
+```
+
+## Examples
+
+Returns `true` when at least one of the provided boolean conditions is `true`. Define a computed type in the schema using `anyOf` for reuse across queries.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model User {\n   name: String\n   hasEmailVerification: HasEmailVerification inherits Boolean\n   hasPhoneVerification: HasPhoneVerification inherits Boolean\n   hasIdVerification: HasIdVerification inherits Boolean\n}\ntype IsVerified inherits Boolean by anyOf(HasEmailVerification, HasPhoneVerification, HasIdVerification)",
+  "query" : "given {\n   user: User = {\n      name: 'Alice',\n      hasEmailVerification: false,\n      hasPhoneVerification: true,\n      hasIdVerification: false\n   }\n}\nfind {\n   name: user.name\n   isVerified: IsVerified\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"name\": \"Alice\", \"isVerified\": true}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

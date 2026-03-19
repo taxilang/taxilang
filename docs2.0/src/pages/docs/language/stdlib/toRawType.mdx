@@ -1,0 +1,49 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: toRawType
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.toRawType`
+
+## Signature
+
+```taxi
+declare extension function toRawType(source: Any):Any
+```
+
+## Description
+
+Removes the semantic typing from a scalar value, returning it typed as its raw primitive.
+
+Useful when you need to compare values by their raw content while ignoring their semantic type.
+
+- For a scalar value: strips the semantic type, returning the underlying primitive.
+- For an array of scalars: strips the semantic type from each element.
+
+Not supported on objects or arrays of objects.
+
+```taxi
+find { order: Order } as {
+   rawId: String = order.id.toRawType()
+}
+```
+
+## Examples
+
+Strips the semantic type from a typed scalar, returning the raw primitive value.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "type OrderId inherits String",
+  "query" : "given {\n   orderId: OrderId = 'ORD-001'\n}\nfind {\n   rawId: String = orderId.toRawType()\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"rawId\": \"ORD-001\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
