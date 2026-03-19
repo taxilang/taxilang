@@ -26,7 +26,7 @@ function getIconComponent(iconId: string | null | undefined): React.ComponentTyp
   return ICON_COMPONENTS[iconId] || null;
 }
 
-export function NodeBadge({ label, kind, iconId }: NodeBadgeProps): React.JSX.Element {
+export function NodeBadge({ label, kind, iconId }: NodeBadgeProps): JSX.Element {
   const IconComponent = getIconComponent(iconId);
   const theme = getNodeTheme(kind);
   const cssClass = getBadgeClass(kind);

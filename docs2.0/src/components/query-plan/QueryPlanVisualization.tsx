@@ -3,6 +3,7 @@ import {
   ReactFlow,
   Node,
   Edge,
+  NodeTypes,
   useNodesState,
   useEdgesState,
   useReactFlow,
@@ -25,11 +26,11 @@ import { ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24
 import colors from 'tailwindcss/colors'
 import { applyFixedPortElkLayout } from './elk-chart-layout'
 
-const nodeTypes = {
-  QueryPlanNode: QueryPlanNode,
-  QueryPlanTypeNode: QueryPlanTypeNode,
-  QueryPlanServiceNode: QueryPlanServiceNode,
-  QueryPlanOperationNode: QueryPlanOperationNode,
+const nodeTypes: NodeTypes = {
+  QueryPlanNode: QueryPlanNode as any,
+  QueryPlanTypeNode: QueryPlanTypeNode as any,
+  QueryPlanServiceNode: QueryPlanServiceNode as any,
+  QueryPlanOperationNode: QueryPlanOperationNode as any,
 }
 
 interface QueryPlanVisualizationProps {
@@ -131,7 +132,6 @@ function QueryPlanFlowInternal({ queryPlanData, height = 400 }: QueryPlanVisuali
       targetNodeId: link.targetId,
       targetHandleId: link.targetHandleId,
       targetNodeName: null as any, // Not needed for query plan
-      linkKind: 'entity',
     });
 
     // Build React Flow nodes (Elk will position them)

@@ -3,7 +3,7 @@ import { Node } from '@xyflow/react';
 import { DiagramNode } from '../types';
 import { BaseQueryPlanNode } from './BaseQueryPlanNode';
 
-export interface QueryPlanServiceNodeData {
+export interface QueryPlanServiceNodeData extends Record<string, unknown> {
   node: DiagramNode;
 }
 
