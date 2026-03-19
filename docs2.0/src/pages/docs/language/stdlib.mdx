@@ -38,7 +38,7 @@ find { order: Order } as {
 }
 ```
 
-#### Examples
+### Examples
 Formats an integer with zero-padding using `%05d`.
 
 <PlaygroundSnippet scenario={{
@@ -80,7 +80,7 @@ find { person: Person } as {
 }
 ```
 
-#### Examples
+### Examples
 Concatenates multiple string values into a single string.
 
 <PlaygroundSnippet scenario={{
@@ -114,7 +114,7 @@ find {
 }
 ```
 
-#### Examples
+### Examples
 Demonstrates partial matching: anchor patterns, substring patterns, and non-matching patterns.
 
 <PlaygroundSnippet scenario={{
@@ -145,7 +145,7 @@ find {
 }
 ```
 
-#### Examples
+### Examples
 Checks for a case-sensitive substring match.
 
 <PlaygroundSnippet scenario={{
@@ -176,7 +176,7 @@ find {
 }
 ```
 
-#### Examples
+### Examples
 Checks whether a string ends with a given suffix, case-sensitively.
 
 <PlaygroundSnippet scenario={{
@@ -206,7 +206,7 @@ find { path: FilePath } as {
 }
 ```
 
-#### Examples
+### Examples
 Returns the index of a substring within a string, or `-1` if not found.
 
 <PlaygroundSnippet scenario={{
@@ -236,7 +236,7 @@ find { account: Account } as {
 }
 ```
 
-#### Examples
+### Examples
 Extracts the first N characters from a string.
 
 <PlaygroundSnippet scenario={{
@@ -266,7 +266,7 @@ find { message: Message } as {
 }
 ```
 
-#### Examples
+### Examples
 Returns the character count of a string.
 
 <PlaygroundSnippet scenario={{
@@ -296,7 +296,7 @@ find { product: Product } as {
 }
 ```
 
-#### Examples
+### Examples
 Converts a string to lower case.
 
 <PlaygroundSnippet scenario={{
@@ -329,7 +329,7 @@ find { account: Account } as {
 }
 ```
 
-#### Examples
+### Examples
 Returns `true` only when the full string matches the regex pattern.
 
 <PlaygroundSnippet scenario={{
@@ -361,7 +361,7 @@ find { order: Order } as {
 }
 ```
 
-#### Examples
+### Examples
 Extracts a substring using a zero-based start index (inclusive) and end index (exclusive).
 
 <PlaygroundSnippet scenario={{
@@ -393,7 +393,7 @@ find { product: Product } as {
 }
 ```
 
-#### Examples
+### Examples
 Pads a string to the target length by appending characters on the right.
 
 <PlaygroundSnippet scenario={{
@@ -425,7 +425,7 @@ find { order: Order } as {
 }
 ```
 
-#### Examples
+### Examples
 Zero-pads a short string to the target length from the left.
 
 <PlaygroundSnippet scenario={{
@@ -455,7 +455,7 @@ find { order: Order } as {
 }
 ```
 
-#### Examples
+### Examples
 Replaces all occurrences of a substring with a new value.
 
 <PlaygroundSnippet scenario={{
@@ -485,7 +485,7 @@ find { account: Account } as {
 }
 ```
 
-#### Examples
+### Examples
 Extracts the last N characters from a string.
 
 <PlaygroundSnippet scenario={{
@@ -515,7 +515,7 @@ find { files: File[] } as {
 }
 ```
 
-#### Examples
+### Examples
 Returns `true` when the string begins with the specified prefix, case-sensitively.
 
 <PlaygroundSnippet scenario={{
@@ -545,7 +545,7 @@ find { order: Order } as {
 }
 ```
 
-#### Examples
+### Examples
 Strips leading and trailing whitespace from a string.
 
 <PlaygroundSnippet scenario={{
@@ -575,7 +575,7 @@ find { product: Product } as {
 }
 ```
 
-#### Examples
+### Examples
 Converts a string to upper case.
 
 <PlaygroundSnippet scenario={{
@@ -610,7 +610,7 @@ find { sprint: Sprint } as {
 }
 ```
 
-#### Examples
+### Examples
 Returns `true` when every item in the collection satisfies the predicate.
 
 <PlaygroundSnippet scenario={{
@@ -653,7 +653,7 @@ This function ensures that every condition in a set must be satisfied.
 type CanPurchasePremium inherits Boolean by allOf(IsActive, HasSufficientFunds, IsVerified)
 ```
 
-#### Examples
+### Examples
 This example demonstrates how to use `allOf()` to verify if a user meets all required criteria for premium access.
 
 <PlaygroundSnippet scenario={{
@@ -686,7 +686,7 @@ find { batch: OrderBatch } as {
 }
 ```
 
-#### Examples
+### Examples
 Returns `true` when at least one item satisfies the predicate.
 
 <PlaygroundSnippet scenario={{
@@ -717,7 +717,7 @@ This function evaluates multiple conditions and returns true if any of them are 
 type IsVerified inherits Boolean by anyOf(HasEmailVerification, HasPhoneVerification, HasIdVerification)
 ```
 
-#### Examples
+### Examples
 Returns `true` when at least one of the provided boolean conditions is `true`. Define a computed type in the schema using `anyOf` for reuse across queries.
 
 <PlaygroundSnippet scenario={{
@@ -749,7 +749,7 @@ find { cart: ShoppingCart } as {
 }
 ```
 
-#### Examples
+### Examples
 Concatenates two arrays, returning a new array with elements of the first followed by elements of the second.
 
 <PlaygroundSnippet scenario={{
@@ -784,7 +784,7 @@ find { person: Person } as {
 }
 ```
 
-#### Examples
+### Examples
 Merges all `Address` collections on a `Person` into a single flat list, even though they live in separate fields.
 
 <PlaygroundSnippet scenario={{
@@ -817,7 +817,7 @@ find { user: User } as {
 }
 ```
 
-#### Examples
+### Examples
 Checks whether a collection contains a specific element using type-based access.
 
 <PlaygroundSnippet scenario={{
@@ -854,7 +854,7 @@ find {
 passing string literals as `searchTargets` always returns `false` due to a type comparison bug.
 See `problems/containsAll.md`. Use a `String[]` collection as a workaround.
 
-#### Examples
+### Examples
 Returns `true` when the collection contains all specified search values, `false` if any are missing.
 
 <PlaygroundSnippet scenario={{
@@ -891,7 +891,7 @@ find {
 passing string literals as `searchTargets` always returns `false` due to a type comparison bug.
 See `problems/containsAny.md`. Use a `String[]` collection as a workaround.
 
-#### Examples
+### Examples
 Returns `true` when the collection contains at least one of the search values, `false` when none match.
 
 <PlaygroundSnippet scenario={{
@@ -924,7 +924,7 @@ find { user: User } as {
 }
 ```
 
-#### Examples
+### Examples
 This example demonstrates how to use `exactlyOne()` to retrieve the single active session for a user.
 
 <PlaygroundSnippet scenario={{
@@ -958,7 +958,7 @@ find { store: Store } as {
 }
 ```
 
-#### Examples
+### Examples
 Filters a collection by predicate, returning only matching elements. Uses type-based lambda for clean, semantic access.
 
 <PlaygroundSnippet scenario={{
@@ -1011,7 +1011,7 @@ find { account: Account } as {
 }
 ```
 
-#### Examples
+### Examples
 This example demonstrates how to use `first()` to retrieve the most recent transaction for an account.
 
 <PlaygroundSnippet scenario={{
@@ -1044,7 +1044,7 @@ find { playlist: Playlist } as {
 }
 ```
 
-#### Examples
+### Examples
 Retrieves a song from a playlist by its zero-based index position.
 
 <PlaygroundSnippet scenario={{
@@ -1074,7 +1074,7 @@ find { order: Order } as {
 }
 ```
 
-#### Examples
+### Examples
 Returns the default array when the source is empty, or the source array when it has elements.
 
 <PlaygroundSnippet scenario={{
@@ -1104,7 +1104,7 @@ find { playlist: Playlist } as {
 }
 ```
 
-#### Examples
+### Examples
 Returns the index of an item in the collection, or `-1` if not found.
 
 <PlaygroundSnippet scenario={{
@@ -1137,7 +1137,7 @@ find { productA: Product, productB: Product } as {
 }
 ```
 
-#### Examples
+### Examples
 Returns only elements present in both collections, identified by value equality.
 
 <PlaygroundSnippet scenario={{
@@ -1167,7 +1167,7 @@ find { order: Order } as {
 }
 ```
 
-#### Examples
+### Examples
 Returns `true` for an empty collection, `false` when the collection has elements.
 
 <PlaygroundSnippet scenario={{
@@ -1197,7 +1197,7 @@ find { order: Order } as {
 }
 ```
 
-#### Examples
+### Examples
 Joins array elements into a single string, with optional separator, prefix, and postfix.
 
 <PlaygroundSnippet scenario={{
@@ -1230,7 +1230,7 @@ find { account: Account } as {
 }
 ```
 
-#### Examples
+### Examples
 This example demonstrates how to use `last()` to retrieve the oldest transaction for an account.
 
 <PlaygroundSnippet scenario={{
@@ -1263,7 +1263,7 @@ find { order: Order } as {
 }
 ```
 
-#### Examples
+### Examples
 Creates an inline collection to check if an order status is one of the valid values.
 
 <PlaygroundSnippet scenario={{
@@ -1296,7 +1296,7 @@ find { sprint: Sprint } as {
 }
 ```
 
-#### Examples
+### Examples
 Returns `true` when no item in the collection satisfies the predicate.
 
 <PlaygroundSnippet scenario={{
@@ -1327,7 +1327,7 @@ This function is useful for checking if none of multiple conditions apply.
 type NoPermissions inherits Boolean by noneOf(IsAdmin, IsEditor, IsViewer)
 ```
 
-#### Examples
+### Examples
 Returns `true` when all provided boolean conditions are `false`. Uses type-based access to combine semantic boolean types.
 
 <PlaygroundSnippet scenario={{
@@ -1359,7 +1359,7 @@ find { user: User } as {
 }
 ```
 
-#### Examples
+### Examples
 Returns the collection unchanged when non-null. Use `.orEmpty()` to safely chain operations on nullable arrays.
 
 <PlaygroundSnippet scenario={{
@@ -1392,7 +1392,7 @@ find { inventory: Inventory } as {
 }
 ```
 
-#### Examples
+### Examples
 Finds the single product matching the given SKU. Throws if no match or more than one match is found.
 
 <PlaygroundSnippet scenario={{
@@ -1426,7 +1426,7 @@ find { inventory: Inventory } as {
 }
 ```
 
-#### Examples
+### Examples
 Looks up products by SKU using a cached index. Faster than `single()` when querying the same collection multiple times.
 
 <PlaygroundSnippet scenario={{
@@ -1456,7 +1456,7 @@ find { orders: Order[] } as {
 }
 ```
 
-#### Examples
+### Examples
 Returns the number of elements in the collection.
 
 <PlaygroundSnippet scenario={{
@@ -1490,7 +1490,7 @@ find {
 }
 ```
 
-#### Examples
+### Examples
 Adds days to a date — positive to advance, negative to go back.
 
 <PlaygroundSnippet scenario={{
@@ -1521,7 +1521,7 @@ find {
 }
 ```
 
-#### Examples
+### Examples
 Adds minutes to a datetime — positive to advance, negative to go back.
 
 <PlaygroundSnippet scenario={{
@@ -1552,7 +1552,7 @@ find {
 }
 ```
 
-#### Examples
+### Examples
 Adds seconds to an instant — positive to advance, negative to go back.
 
 <PlaygroundSnippet scenario={{
@@ -1661,7 +1661,7 @@ find {
 }
 ```
 
-#### Examples
+### Examples
 Parses ISO date and datetime strings into their respective Taxi date types.
 
 <PlaygroundSnippet scenario={{
@@ -1696,7 +1696,7 @@ find { order: Order } as {
 }
 ```
 
-#### Examples
+### Examples
 Computes the average score from a collection of items.
 
 <PlaygroundSnippet scenario={{
@@ -1726,7 +1726,7 @@ find { products: Product[] } as {
 }
 ```
 
-#### Examples
+### Examples
 Returns the maximum price from a collection of products.
 
 <PlaygroundSnippet scenario={{
@@ -1756,7 +1756,7 @@ find { products: Product[] } as {
 }
 ```
 
-#### Examples
+### Examples
 Returns the minimum price from a collection of products.
 
 <PlaygroundSnippet scenario={{
@@ -1788,7 +1788,7 @@ find { measurement: Measurement } as {
 }
 ```
 
-#### Examples
+### Examples
 Rounds a decimal to the specified number of decimal places.
 
 <PlaygroundSnippet scenario={{
@@ -1818,7 +1818,7 @@ find { order: Order } as {
 }
 ```
 
-#### Examples
+### Examples
 Sums a numeric field across all elements of a collection.
 
 <PlaygroundSnippet scenario={{
@@ -1851,7 +1851,7 @@ find {
 }
 ```
 
-#### Examples
+### Examples
 Creates an empty instance of a model: scalars are null and collections are empty arrays.
 
 <PlaygroundSnippet scenario={{
@@ -1881,7 +1881,7 @@ find {
 }
 ```
 
-#### Examples
+### Examples
 Compares two string values — matching pair returns true, non-matching returns false.
 
 <PlaygroundSnippet scenario={{
@@ -1914,7 +1914,7 @@ find {
 }
 ```
 
-#### Examples
+### Examples
 Looks up an enum member by its string value and returns it as a typed enum.
 
 <PlaygroundSnippet scenario={{
@@ -1946,7 +1946,7 @@ find {
 }
 ```
 
-#### Examples
+### Examples
 Returns true for a declared enum member name, false for a name not in the enum.
 
 <PlaygroundSnippet scenario={{
@@ -2029,7 +2029,7 @@ If the callback is any other expression, it is evaluated against each element:
 Film[].map((Title) -> Title.upperCase())
 ```
 
-#### Examples
+### Examples
 Extracts a field from each object in a collection, returning a typed array.
 
 <PlaygroundSnippet scenario={{
@@ -2084,7 +2084,7 @@ find {
 }
 ```
 
-#### Examples
+### Examples
 Converts an Order to a Receipt model using only the fields present in the source, without calling any services.
 
 <PlaygroundSnippet scenario={{
@@ -2121,7 +2121,7 @@ find { order: Order } as {
 }
 ```
 
-#### Examples
+### Examples
 Strips the semantic type from a typed scalar, returning the raw primitive value.
 
 <PlaygroundSnippet scenario={{
@@ -2160,7 +2160,7 @@ model Event {
 }
 ```
 
-#### Examples
+### Examples
 Parses a JSON string embedded in a model field into a structured type.
 
 <PlaygroundSnippet scenario={{
