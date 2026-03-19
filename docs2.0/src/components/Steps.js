@@ -1,14 +1,14 @@
 import clsx from 'clsx'
-import {useEffect, useState, useRef} from 'react'
+import { useEffect, useState, useRef } from 'react'
 import redent from 'redent'
 import Alert from '@reach/alert'
-import {SnippetGroup} from '@/components/SnippetGroup'
-import {Editor} from '@/components/Editor'
-import {Transition} from '@headlessui/react'
+import { SnippetGroup } from '@/components/SnippetGroup'
+import { Editor } from '@/components/Editor'
+import { Transition } from '@headlessui/react'
 
 import Prism from '@/components/prismClientSide'
 
-export function Steps({intro, steps, code, level = 2}) {
+export function Steps({ intro, steps, code, level = 2 }) {
   let StepHeading = `h${level}`
 
   return (
@@ -26,26 +26,26 @@ export function Steps({intro, steps, code, level = 2}) {
           {intro()}
         </div>
       )}
-      <ol className="relative space-y-2 mb-16" style={{counterReset: 'step'}}>
+      <ol className="relative space-y-2 mb-16" style={{ counterReset: 'step' }}>
         {steps.map((step, index) => (
           <li
             key={step.title}
             className={clsx(
               'relative pl-10 xl:grid grid-cols-5 gap-16 before:content-[counter(step)] before:absolute before:left-0 before:flex before:items-center before:justify-center before:w-[calc(1.375rem+1px)] before:h-[calc(1.375rem+1px)] before:text-[0.625rem] before:font-bold before:text-slate-700 before:rounded-md before:shadow-sm before:ring-1 before:ring-slate-900/5 dark:before:bg-slate-700 dark:before:text-slate-200 dark:before:ring-0 dark:before:shadow-none dark:before:highlight-white/5',
               index !== steps.length - 1 &&
-              'pb-8 after:absolute after:top-[calc(1.875rem+1px)] after:bottom-0 after:left-[0.6875rem] after:w-px after:bg-slate-200 dark:after:bg-slate-200/5'
+              'pb-8 after:absolute after:top-[calc(1.875rem+1px)] after:bottom-0 after:left-[0.6875rem] after:w-px after:bg-slate-200 dark:after:bg-slate-200/5',
             )}
-            style={{counterIncrement: 'step'}}
+            style={{ counterIncrement: 'step' }}
           >
             <div className="mb-6 col-span-2 xl:mb-0">
               <StepHeading className="text-sm leading-6 text-slate-900 font-semibold mb-2 dark:text-slate-200">
                 {step.title}
               </StepHeading>
               <div className="prose prose-slate prose-sm dark:prose-dark">
-                <step.body/>
+                <step.body />
               </div>
             </div>
-            {step.code && <Snippet code={step.code} highlightedCode={code[index]}/>}
+            {step.code && <Snippet code={step.code} highlightedCode={code[index]} />}
           </li>
         ))}
       </ol>
@@ -53,13 +53,13 @@ export function Steps({intro, steps, code, level = 2}) {
   )
 }
 
-function CopyButton({code}) {
-  let [{state, i}, setState] = useState({state: 'idle', i: 0})
+function CopyButton({ code }) {
+  let [{ state, i }, setState] = useState({ state: 'idle', i: 0 })
 
   useEffect(() => {
     if (state === 'copied') {
       let handle = window.setTimeout(() => {
-        setState({state: 'idle', i: i + 1})
+        setState({ state: 'idle', i: i + 1 })
       }, 1500)
       return () => {
         window.clearTimeout(handle)
@@ -77,7 +77,7 @@ function CopyButton({code}) {
         })}
         onClick={() => {
           navigator.clipboard.writeText(redent(code.replace(/^[+>-]/gm, ' '))).then(() => {
-            setState({state: 'copied', i: i + 1})
+            setState({ state: 'copied', i: i + 1 })
           })
         }}
       >
@@ -90,9 +90,9 @@ function CopyButton({code}) {
           aria-hidden="true"
           className="w-8 h-8"
         >
-          <path d="M13 10.75h-1.25a2 2 0 0 0-2 2v8.5a2 2 0 0 0 2 2h8.5a2 2 0 0 0 2-2v-8.5a2 2 0 0 0-2-2H19"/>
+          <path d="M13 10.75h-1.25a2 2 0 0 0-2 2v8.5a2 2 0 0 0 2 2h8.5a2 2 0 0 0 2-2v-8.5a2 2 0 0 0-2-2H19" />
           <path
-            d="M18 12.25h-4a1 1 0 0 1-1-1v-1.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1.5a1 1 0 0 1-1 1ZM13.75 16.25h4.5M13.75 19.25h4.5"/>
+            d="M18 12.25h-4a1 1 0 0 1-1-1v-1.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1.5a1 1 0 0 1-1 1ZM13.75 16.25h4.5M13.75 19.25h4.5" />
         </svg>
       </button>
       <Transition
@@ -128,28 +128,29 @@ function CopyButton({code}) {
   )
 }
 
-function Code({code, lang, pad}) {
-  const preRef = useRef(null);
+function Code({ code, lang, pad, className }) {
+  const preRef = useRef(null)
 
   useEffect(() => {
     // Force a browser repaint to ensure CSS is applied
     if (preRef.current) {
-      preRef.current.style.opacity = '0.99';
+      preRef.current.style.opacity = '0.99'
       // Use requestAnimationFrame to ensure the repaint happens
       requestAnimationFrame(() => {
         if (preRef.current) {
-          preRef.current.style.opacity = '1';
+          preRef.current.style.opacity = '1'
         }
-      });
+      })
     }
-  }, [code]);
+  }, [code])
 
   return (
     <pre
       ref={preRef}
       className={clsx(
         'text-sm leading-6 text-slate-50 flex ligatures-none',
-        pad && 'overflow-auto'
+        pad && 'overflow-auto',
+        className,
       )}
     >
       <code
@@ -170,16 +171,16 @@ function Code({code, lang, pad}) {
   )
 }
 
-export function Snippet({code, highlightedCode}) {
+export function Snippet({ code, highlightedCode, className }) {
   if (Array.isArray(code)) {
     return (
       <div>
         <SnippetGroup
-          actions={({selectedIndex}) => <CopyButton code={code[selectedIndex].code}/>}
+          actions={({ selectedIndex }) => <CopyButton code={code[selectedIndex].code} />}
         >
-          {code.map(({name, lang}, index) => (
+          {code.map(({ name, lang }, index) => (
             <Editor key={name} filename={name}>
-              <Code code={highlightedCode[index]} lang={lang}/>
+              <Code code={highlightedCode[index]} lang={lang} className={className} />
             </Editor>
           ))}
         </SnippetGroup>
@@ -191,16 +192,16 @@ export function Snippet({code, highlightedCode}) {
     <div
       className="relative z-10 col-span-3 bg-slate-800 rounded-xl shadow-lg xl:ml-0 dark:shadow-none dark:ring-1 dark:ring-inset dark:ring-white/10">
       <TabBar name={code.name}>
-        <CopyButton code={code.code}/>
+        <CopyButton code={code.code} />
       </TabBar>
       <div className="relative">
-        <Code code={highlightedCode} lang={code.lang} pad={true}/>
+        <Code code={highlightedCode} lang={code.lang} pad={true} className={className} />
       </div>
     </div>
   )
 }
 
-function TabBar({name, children}) {
+function TabBar({ name, children }) {
   return (
     <div className="relative flex text-slate-400 text-xs leading-6">
       <div
@@ -208,7 +209,7 @@ function TabBar({name, children}) {
         {name}
       </div>
       <div className="flex-auto flex pt-2 rounded-tr-xl overflow-hidden">
-        <div className="flex-auto -mr-px bg-slate-700/50 border border-slate-500/30 rounded-tl"/>
+        <div className="flex-auto -mr-px bg-slate-700/50 border border-slate-500/30 rounded-tl" />
       </div>
       {children && (
         <div className="absolute top-2 right-0 h-8 flex items-center pr-4">{children}</div>

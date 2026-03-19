@@ -100,30 +100,101 @@ export default function Home(
 export function getStaticProps() {
   let {highlightCodeSnippets} = require('@/components/Guides/Snippets');
 
-  const javascriptCodeSnippet = `// Without Taxi: The integration code you actually write
+  const javascriptCodeSnippet = `// Without Taxi: The integration code you actually write (and maintain)
+import axios from 'axios';
+
+const ORDER_API = process.env.ORDER_API_URL;
+const CUSTOMER_API = process.env.CUSTOMER_API_URL;
+const SHIPPING_API = process.env.SHIPPING_API_URL;
+const PAYMENT_API = process.env.PAYMENT_API_URL;
+
+async function withRetry(fn, retries = 3, delay = 500) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (i === retries - 1) throw err;
+      await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
+    }
+  }
+}
+
 async function getOrdersWithDetails(customerId) {
-  const customer = await customerApi.getCustomer(customerId);
-  const orders = await orderApi.getOrdersByCustomer(customerId);
+  if (!customerId) throw new Error('customerId is required');
+
+  let customer;
+  try {
+    const res = await withRetry(() =>
+      axios.get(\`\${CUSTOMER_API}/customers/\${customerId}\`, {
+        headers: { Authorization: \`Bearer \${getToken()}\` },
+        timeout: 5000,
+      })
+    );
+    customer = res.data;
+  } catch (err) {
+    throw new Error(\`Failed to fetch customer \${customerId}: $\{err.message}\`);
+  }
+
+  let orders;
+  try {
+    const res = await withRetry(() =>
+      axios.get(\`\${ORDER_API}/orders\`, {
+        params: { customerId },
+        headers: { Authorization: \`Bearer \${getToken()}\` },
+        timeout: 5000,
+      })
+    );
+    // Note: this API returns { data: { items: [...] } } not an array
+    orders = res.data?.data?.items ?? [];
+  } catch (err) {
+    throw new Error(\`Failed to fetch orders for \${customerId}: $\{err.message}\`);
+  }
+
+  if (!Array.isArray(orders) || orders.length === 0) return [];
 
   const enrichedOrders = await Promise.all(
     orders.map(async (order) => {
-      const [shipping, payment] = await Promise.all([
-        shippingApi.getTracking(order.trackingId).catch(() => null),
-        paymentApi.getPayment(order.paymentId).catch(() => null),
+      // Shipping and payment APIs use different ID fields — easy to miss
+      const trackingId = order.trackingId ?? order.tracking_id;
+      const paymentId = order.paymentId ?? order.payment_ref;
+
+      const [shippingResult, paymentResult] = await Promise.allSettled([
+        withRetry(() =>
+          axios.get(\`$\{SHIPPING_API}/tracking/$\{trackingId}\`, {
+            headers: { Authorization: \`Bearer $\{getToken()}\` },
+            timeout: 5000,
+          })
+        ),
+        withRetry(() =>
+          axios.get(\`$\{PAYMENT_API}/payments/$\{paymentId}\`, {
+            headers: { Authorization: \`Bearer $\{getToken()}\` },
+            timeout: 5000,
+          })
+        ),
       ]);
 
+      const shipping =
+        shippingResult.status === 'fulfilled'
+          ? shippingResult.value.data
+          : null;
+      const payment =
+        paymentResult.status === 'fulfilled'
+          ? paymentResult.value.data
+          : null;
+
+      // Field names diverged between teams — map them manually
       return {
-        orderId: order.id,
-        total: order.total,
-        customerName: customer.name,
-        shippingStatus: shipping?.status ?? 'unknown',
-        paymentMethod: payment?.method,
+        orderId: order.id ?? order.order_id,
+        total: order.totalAmount ?? order.total,
+        customerName: \`$\{customer.firstName} $\{customer.lastName}\`,
+        shippingStatus: shipping?.currentStatus ?? shipping?.status ?? 'unknown',
+        paymentMethod: payment?.method ?? payment?.paymentType ?? null,
       };
     })
   );
 
   return enrichedOrders;
-}`;
+}`
 
   return {
     props: {
