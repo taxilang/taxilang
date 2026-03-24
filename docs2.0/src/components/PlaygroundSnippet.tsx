@@ -390,7 +390,11 @@ export interface OperationStub {
 }
 
 // Attach compound components
-(PlaygroundSnippet as any).Description = Description;
-(PlaygroundSnippet as any).Scenario = Scenario;
+const PlaygroundSnippetWithCompounds = PlaygroundSnippet as React.FC<StubQueryDisplayProps> & {
+  Description: typeof Description;
+  Scenario: typeof Scenario;
+};
+PlaygroundSnippetWithCompounds.Description = Description;
+PlaygroundSnippetWithCompounds.Scenario = Scenario;
 
-export default PlaygroundSnippet;
+export default PlaygroundSnippetWithCompounds;

@@ -1,0 +1,34 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: now
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.dates.now`
+
+## Signature
+
+```taxi
+declare function now():Instant
+```
+
+## Description
+
+Returns the current UTC instant.
+
+The output changes every time the function is called. Use `@Format` to control how the instant is serialised in query output.
+
+```taxi
+// Stamp the current time on a record
+find {
+   @Format("yyyy-MM-dd'T'HH:mm:ssXXX")
+   processedAt: Instant = now()
+}
+```
+
+
+

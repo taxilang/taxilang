@@ -6,6 +6,8 @@ import arrow.core.right
 import com.google.common.cache.CacheBuilder
 import lang.taxi.ImmutableEquality
 import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
+import java.util.Locale
+import java.util.Locale.getDefault
 
 object Enums {
    fun enumValue(enum: QualifiedName, enumValueName: String): EnumValueQualifiedName {
@@ -153,9 +155,22 @@ data class EnumType(
    }
 
    override val isScalar: Boolean = true
-   private val members: Map<EnumValue, EnumMember> by lazy {
-      this.values.map { value -> value to EnumMember(this, value) }.toMap()
-   }
+
+   private val enumMemberCache = CacheBuilder
+      .newBuilder()
+      .build<String, Map<EnumValue, EnumMember>>()
+
+   // Maintain a cache here, rather than lazy, as the members
+   // change when synonyms are added.
+   // see: ORB-1064
+   private val members: Map<EnumValue, EnumMember>
+      get() {
+         if (!this.isDefined) return emptyMap()
+         return this.enumMemberCache.get(currentStateCacheKey) {
+            this.values.associate { value -> value to EnumMember(this, value) }
+         }
+      }
+
 
    override fun getMember(name: String, permitImplicitResolution: Boolean): Either<String, EnumValue> {
       return if (hasName(name)) {
@@ -227,6 +242,7 @@ data class EnumType(
       if (!this.isDefined) {
          error("It is invalid to add an extension before the enum is defined")
       }
+      this.enumValueCache.invalidate(currentStateCacheKey)
       val definedValueNames = this.definition!!.values.map { it.name }
       // Validate that the extension doesn't modify members
       val illegalValueDefinitions = extension.values.filter { value -> !definedValueNames.contains(value.name) }
@@ -249,6 +265,11 @@ data class EnumType(
          return defaultValue != null
       }
 
+   private val currentStateCacheKey:String
+      get() {
+         return "${this.definition!!.hashCode()}-${this.extensions.hashCode()}"
+      }
+
    private val enumValueCache = CacheBuilder
       .newBuilder()
       .build<String, List<EnumValue>>()
@@ -263,8 +284,7 @@ data class EnumType(
                // Therefore, we're caching this.
                // Note the cache must invaliate when things that affect the list of values change.
                // THat's either the definition, or adding an extension.
-               val cacheKey = "${this.definition!!.hashCode()}-${this.extensions.hashCode()}"
-               this.enumValueCache.get(cacheKey) {
+               this.enumValueCache.get(currentStateCacheKey) {
                   this.definition!!.values.map { value ->
                      val valueExtensions: List<EnumValueExtension> = valueExtensions(value.name)
                      val collatedAnnotations = value.annotations + valueExtensions.annotations()
@@ -312,7 +332,7 @@ data class EnumType(
          first.toString() == second.toString()
       } else {
          when {
-            (first is String && second is String) -> first.lowercase() == second.lowercase()
+            (first is String && second is String) -> first.equals(second, ignoreCase = true)
             else -> first.toString() == second.toString()
          }
       }
@@ -332,8 +352,18 @@ data class EnumType(
          ?: error("Enum ${this.qualifiedName} does not contain either a name nor a value of $valueOrName")
 
    fun member(valueOrName: Any?): Either<String,EnumMember> {
-      return members[this.of(valueOrName)]?.right()
-         ?: "Enum ${this.qualifiedName} does not contain a member with either name or value of $valueOrName".left()
+      // MP 11-Feb-26
+      // Was: members[this.of(valueOrName)]?.right()
+      // But, key lookup is failing, as hashcode is different!!
+      val valueFromValueOrName = this.of(valueOrName)
+      return values.firstOrNull { it.name == valueFromValueOrName.name }?.let { matchedKey ->
+         val matchedValue = members[matchedKey]
+         matchedValue?.right()
+      } ?:
+         "Enum ${this.qualifiedName} does not contain a member with either name or value of $valueOrName".left()
+//
+//      return members[this.of(valueOrName)]?.right()
+//         ?: "Enum ${this.qualifiedName} does not contain a member with either name or value of $valueOrName".left()
    }
 
    private fun valueExtensions(valueName: String): List<EnumValueExtension> {

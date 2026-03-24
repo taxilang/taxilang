@@ -61,7 +61,7 @@ export function Caption({className = '', ...props}) {
 }
 
 export function SectionHeadingParagraph({className = '', ...props}) {
-  return (<div className={`mt-8 mb-10 text-lg text-slate-300 lg:text-center max-w-5xl mx-auto flex flex-col gap-4 ${className}`} {...props}>
+  return (<div className={`mt-8 mb-10 text-xl text-slate-300 lg:text-center max-w-5xl mx-auto flex flex-col gap-4 ${className}`} {...props}>
   </div>)
 }
 

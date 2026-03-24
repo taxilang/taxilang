@@ -1,0 +1,57 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: all
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.all`
+
+## Signature
+
+```taxi
+declare extension function <T> all(collection: T[], predicate: (T) -> Boolean): Boolean
+```
+
+## Description
+
+Returns `true` if every item in the collection satisfies the predicate, or `false` if any item does not.
+
+Returns `true` for an empty collection (vacuous truth).
+
+```taxi
+// Check if every task in a sprint is complete
+find { sprint: Sprint } as {
+   allDone: Boolean = sprint.tasks.all((task) -> task.isComplete)
+}
+```
+
+## Examples
+
+Returns `true` when every item in the collection satisfies the predicate.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Task {\n   name: String\n   isComplete: Boolean\n}",
+  "query" : "given {\n   tasks: Task[] = [\n      { name: 'Setup', isComplete: true },\n      { name: 'Build', isComplete: true },\n      { name: 'Deploy', isComplete: true }\n   ]\n}\nfind {\n   allDone: Boolean = tasks.all((task: Task) -> task.isComplete)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"allDone\": true}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+Returns `false` when at least one item does not satisfy the predicate.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Task {\n   name: String\n   isComplete: Boolean\n}",
+  "query" : "given {\n   tasks: Task[] = [\n      { name: 'Setup', isComplete: true },\n      { name: 'Build', isComplete: true },\n      { name: 'Deploy', isComplete: false }\n   ]\n}\nfind {\n   allDone: Boolean = tasks.all((task: Task) -> task.isComplete)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"allDone\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

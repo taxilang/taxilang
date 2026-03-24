@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: upperCase
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.upperCase`
+
+## Signature
+
+```taxi
+declare extension function upperCase(String):String
+```
+
+## Description
+
+Converts all characters in the string to upper case.
+
+```taxi
+find { product: Product } as {
+   upperName: String = product.name.upperCase()
+}
+```
+
+## Examples
+
+Converts a string to upper case.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   upper: String = upperCase('hello world')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"upper\": \"HELLO WORLD\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

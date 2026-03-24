@@ -1,0 +1,43 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: endsWith
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.endsWith`
+
+## Signature
+
+```taxi
+declare extension function endsWith(source: String, valueToSearchFor:String):Boolean
+```
+
+## Description
+
+Returns `true` if `source` ends with the specified suffix. The match is case-sensitive.
+
+```taxi
+// Check if a filename has a specific extension
+find {
+   isCsv: Boolean = FileName.endsWith(".csv")
+}
+```
+
+## Examples
+
+Checks whether a string ends with a given suffix, case-sensitively.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   hasSuffix: Boolean = \"hello.csv\".endsWith(\".csv\")\n   nope: Boolean = \"hello.csv\".endsWith(\".json\")\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"hasSuffix\": true, \"nope\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

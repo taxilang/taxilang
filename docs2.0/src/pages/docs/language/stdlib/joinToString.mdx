@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: joinToString
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.joinToString`
+
+## Signature
+
+```taxi
+declare extension function <T> joinToString(values:T[], separator: String = ",", prefix: String? = null, postfix: String? = null): String
+```
+
+## Description
+
+Creates a string from all the elements separated using `separator` and using the given `prefix` and `postfix` if supplied. Null values are omitted.
+
+```taxi
+find { order: Order } as {
+   tagList: String = order.tags.joinToString(', ')
+}
+```
+
+## Examples
+
+Joins array elements into a single string, with optional separator, prefix, and postfix.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "given {\n   tags: String[] = ['alpha', 'beta', 'gamma']\n}\nfind {\n   joined: String = tags.joinToString(', ')\n   withBrackets: String = tags.joinToString(', ', '[', ']')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"joined\": \"alpha, beta, gamma\", \"withBrackets\": \"[alpha, beta, gamma]\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

@@ -1,0 +1,43 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: noneOf
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.noneOf`
+
+## Signature
+
+```taxi
+declare function noneOf(values:Boolean...): Boolean
+```
+
+## Description
+
+Returns `true` only if all provided boolean values are `false`. Equivalent to logical NOR.
+
+This function is useful for checking if none of multiple conditions apply.
+
+```taxi
+// Check if a user has no permissions
+type NoPermissions inherits Boolean by noneOf(IsAdmin, IsEditor, IsViewer)
+```
+
+## Examples
+
+Returns `true` when all provided boolean conditions are `false`. Uses type-based access to combine semantic boolean types.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "type IsAdmin inherits Boolean\ntype IsEditor inherits Boolean\ntype IsViewer inherits Boolean\nmodel User {\n   username: Username inherits String\n   isAdmin: IsAdmin\n   isEditor: IsEditor\n   isViewer: IsViewer\n}",
+  "query" : "given {\n   user: User = {\n      username: 'GuestUser',\n      isAdmin: false,\n      isEditor: false,\n      isViewer: false\n   }\n}\nfind {\n   username: Username\n   hasNoAccess: Boolean = noneOf(IsAdmin, IsEditor, IsViewer)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"username\": \"GuestUser\", \"hasNoAccess\": true}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

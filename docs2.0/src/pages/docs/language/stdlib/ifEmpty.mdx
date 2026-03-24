@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: ifEmpty
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.ifEmpty`
+
+## Signature
+
+```taxi
+declare extension function <T> ifEmpty(source:T[], defaultValue:T[]): T[]
+```
+
+## Description
+
+Returns the source array if it is non-empty, otherwise returns the provided default array.
+
+```taxi
+find { order: Order } as {
+   tags: order.tags.ifEmpty(['untagged'])
+}
+```
+
+## Examples
+
+Returns the default array when the source is empty, or the source array when it has elements.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Order {\n   tags: String[]\n}",
+  "query" : "given {\n   emptyOrder: Order = { tags: [] },\n   fullOrder: Order = { tags: ['express', 'gift'] }\n}\nfind {\n   emptyTags: String[] = emptyOrder.tags.ifEmpty(['standard'])\n   fullTags: String[] = fullOrder.tags.ifEmpty(['standard'])\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"emptyTags\": [\"standard\"], \"fullTags\": [\"express\", \"gift\"]}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

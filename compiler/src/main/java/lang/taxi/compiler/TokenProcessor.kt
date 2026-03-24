@@ -47,7 +47,8 @@ class TokenProcessor(
    private val importSources: List<TaxiDocument> = emptyList(),
    collectImports: Boolean = true,
    val typeChecker: TypeChecker,
-   private val linter: Linter
+   private val linter: Linter,
+   private val importFilter: ImportSymbolFilter
 ) {
 
    companion object {
@@ -66,7 +67,8 @@ class TokenProcessor(
       emptyList(),
       collectImports,
       typeChecker,
-      linter
+      linter,
+      ImportSymbolFilters.IncludeEverything
    )
 
    private var createEmptyTypesPerformed: Boolean = false
@@ -95,7 +97,7 @@ class TokenProcessor(
          types
       } else {
          emptyList()
-      }
+      }.filter { token -> importFilter(token.qualifiedName) }
 
       typeSystem = TypeSystem(importedTypes)
       synonymRegistry = SynonymRegistry(typeSystem)
@@ -105,17 +107,23 @@ class TokenProcessor(
       compile()
       val types = typeSystem.typeList(includeImportedTypes = true).toSet()
 
+      fun <T: Named> List<T>.applyImportFiltering():List<T> {
+         return this.filter { item ->
+            importFilter(item.qualifiedName)
+         }
+      }
+
       // MP: 27-Jan-26: Previously we did not include imported services / functions / policies etc
       // here. This was likely wrong, and broke things when we started fixing duplicate imports.
       // However, this may have knock-on effects (targeted for Taxi 1.71)
       return errors to TaxiDocument(
          types = types,
-         services = (importSources.flatMap { it.services } + services).toSet(),
-         policies = (importSources.flatMap { it.policies } + policies).toSet(),
-         functions = (importSources.flatMap { it.functions } + functions).toSet(),
-         annotations = (importSources.flatMap { it.annotations } + annotations).toSet(),
-         views = (importSources.flatMap { it.views } + views).toSet(),
-         queries = (importSources.flatMap { it.queries } + queries).toSet(),
+         services = (importSources.flatMap { it.services }.applyImportFiltering() + services).toSet(),
+         policies = (importSources.flatMap { it.policies }.applyImportFiltering() + policies).toSet(),
+         functions = (importSources.flatMap { it.functions }.applyImportFiltering() + functions).toSet(),
+         annotations = (importSources.flatMap { it.annotations }.applyImportFiltering() + annotations).toSet(),
+         views = (importSources.flatMap { it.views }.applyImportFiltering() + views).toSet(),
+         queries = (importSources.flatMap { it.queries }.applyImportFiltering() + queries).toSet(),
          expressions = topLevelExpressions.toSet(),
       )
    }

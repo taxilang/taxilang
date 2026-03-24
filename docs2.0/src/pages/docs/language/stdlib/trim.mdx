@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: trim
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.trim`
+
+## Signature
+
+```taxi
+declare extension function trim(String):String
+```
+
+## Description
+
+Removes leading and trailing whitespace from a string.
+
+```taxi
+find { order: Order } as {
+   cleanRef: String = order.referenceCode.trim()
+}
+```
+
+## Examples
+
+Strips leading and trailing whitespace from a string.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   trimmed: String = '  hello world  '.trim()\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"trimmed\": \"hello world\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

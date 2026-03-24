@@ -1,0 +1,49 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: parseJson
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.parseJson`
+
+## Signature
+
+```taxi
+declare extension function <T> parseJson(source: String, type: Type<T>):T
+```
+
+## Description
+
+Parses a JSON string into the specified type.
+
+This is useful when a field contains a JSON payload encoded as a string (e.g., from a message queue or API response),
+and you need to deserialize it into a structured type.
+
+Computed fields and functions on the target type are evaluated after parsing.
+
+```taxi
+model Event {
+   name : String
+   payload : String
+   parsed : Payload = parseJson(this.payload, Payload)
+}
+```
+
+## Examples
+
+Parses a JSON string embedded in a model field into a structured type.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Address {\n   city: String\n   country: String\n}\nmodel Customer {\n   name: String\n   addressJson: String\n   address: Address = parseJson(this.addressJson, Address)\n}",
+  "query" : "given {\n   customer: Customer = {\n      name: 'Alice',\n      addressJson: '{ \"city\": \"London\", \"country\": \"UK\" }'\n   }\n}\nfind {\n   name: customer.name\n   address: customer.address\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"name\": \"Alice\", \"address\": {\"city\": \"London\", \"country\": \"UK\"}}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

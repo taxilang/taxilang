@@ -1,0 +1,45 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: single
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.single`
+
+## Signature
+
+```taxi
+declare extension function <T> single(collection:T[], callback: (T) -> Boolean):T
+```
+
+## Description
+
+Returns the first item from a collection that matches the provided predicate. Throws an error if no matching item is found.
+
+This function is useful when you need to find a specific element in a collection based on a condition.
+
+```taxi
+// Find a product by its SKU code
+find { inventory: Inventory } as {
+   appleMacbook: inventory.products.single((product) -> product.sku == "MB-PRO-2023")
+}
+```
+
+## Examples
+
+Finds the single product matching the given SKU. Throws if no match or more than one match is found.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Product {\n   name: ProductName inherits String\n   sku: SKU inherits String\n   price: Price inherits Decimal\n}\nmodel Inventory {\n   products: Product[]\n}",
+  "query" : "given {\n   inventory: Inventory = {\n      products: [\n         { name: 'Laptop', sku: 'LT-001', price: 1200.00 },\n         { name: 'Smartphone', sku: 'SP-002', price: 999.99 },\n         { name: 'Tablet', sku: 'TB-003', price: 499.50 }\n      ]\n   }\n}\nfind {\n   smartphoneDetails: Product = inventory.products.single((product: Product) -> product.sku == 'SP-002')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"smartphoneDetails\": {\"name\": \"Smartphone\", \"sku\": \"SP-002\", \"price\": 999.99}}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

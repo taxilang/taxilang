@@ -173,39 +173,36 @@ query getOrderWithDetails(customerId: CustomerId) {
 
 export const IntegrationComparison: React.FC<IntegrationComparisonProps> = ({ highlightedJsCode }) => {
   return (
-    <div className="max-w-7xl mx-auto p-4 py-16">
+    <div className="max-w-7xl mx-auto p-4 py-4">
       <div className="text-center text-lg mb-12">
-        <BigText>Describe what you want. Taxi handles the rest.</BigText>
+        <BigText>APIs change. Consumers shouldn't have to.</BigText>
         <SectionHeadingParagraph>
           <p>
-            Traditional API integration requires writing and maintaining complex orchestration code. With Taxi, you
-            simply describe the data you need, and Taxi automatically discovers how to fetch it.
+            Traditional API integration requires writing and maintaining complex orchestration code.<br />
+            With Taxi, you simply describe the data you need, and Taxi automatically discovers how
+            to fetch it.
           </p>
         </SectionHeadingParagraph>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start pt-8">
         {/* Left side: JavaScript integration code */}
         <div className="flex flex-col">
-          <h3 className="text-xl font-semibold text-slate-200 mb-2">
-            Without Taxi
-          </h3>
-          <p className="mb-4 text-sm text-slate-400">
-            Manual orchestration code that needs maintenance when APIs change
+          <h3 className="text-xl font-bold text-indigo-400 mb-2">Without Taxi</h3>
+          <p className="mb-4 text-xl text-slate-200">
+            What you write today, then rewrite again when any API changes
           </p>
           <Snippet
+            className={'max-h-[400px] overflow-y-auto'}
             code={javascriptCodeSnippet}
             highlightedCode={highlightedJsCode}
           />
-
         </div>
 
         {/* Right side: Taxi query */}
         <div className="flex flex-col">
-          <h3 className="text-xl font-semibold text-slate-200 mb-2">
-            With Taxi
-          </h3>
-          <p className="mb-4 text-sm text-slate-400">
+          <h3 className="text-xl font-bold text-indigo-400 mb-2">With Taxi</h3>
+          <p className="mb-4 text-xl text-slate-200">
             Declarative query that adapts automatically as your APIs evolve
           </p>
           <PlaygroundSnippet
@@ -215,8 +212,8 @@ export const IntegrationComparison: React.FC<IntegrationComparisonProps> = ({ hi
             showQueryPlan={false}
           >
             <PlaygroundSnippet.Description>
-              Taxi automatically discovers data by joining across services.
-              Click "Show Query Plan" to see how Taxi builds the integration.
+              Taxi automatically discovers data by joining across services. Click "Show Query Plan"
+              to see how Taxi builds the integration.
             </PlaygroundSnippet.Description>
           </PlaygroundSnippet>
         </div>

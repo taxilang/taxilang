@@ -1,0 +1,33 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: reduce
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.reduce`
+
+## Signature
+
+```taxi
+declare extension function <T,A> reduce(collection: T[], callback: (T,A) -> A):A
+```
+
+## Description
+
+Reduces a collection to a single value by applying a combining function to each element and the accumulated result.
+
+Unlike `fold`, there is no initial value — the first element of the collection is used as the starting accumulator.
+
+```taxi
+// Sum a list of integers
+find {
+   total: Int = numbers.reduce((Int, Int) -> Int + Int)
+}
+```
+
+
+

@@ -21,6 +21,7 @@ object StdLib : BuiltInSourceCode {
          Errors.functions +
          EnumFunctions.functions +
          Math.functions +
+         Parsers.functions +
          listOf(Coalesce)
    val taxi = functions.namespacedTaxi() + BuiltInTypes.taxi
    override val sourceCode: SourceCode = SourceCode("stdlib.taxi", taxi)

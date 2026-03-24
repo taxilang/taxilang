@@ -1,0 +1,46 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: filter
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.filter`
+
+## Signature
+
+```taxi
+declare extension function <T> filter(collection:T[], callback: (T) -> Boolean):T[]
+```
+
+## Description
+
+Returns a new collection containing only the members of the original collection that match the provided predicate.
+
+This function is used to select a subset of elements from a collection based on a condition.
+
+```taxi
+find { store: Store } as {
+   allProducts: store.products // all products
+   inStockProducts: store.products.filter((product) -> product.stockLevel > 0)
+   affordableProducts: store.products.filter((product) -> product.price < 50.00)
+}
+```
+
+## Examples
+
+Filters a collection by predicate, returning only matching elements. Uses type-based lambda for clean, semantic access.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Friend {\n   name: Name inherits String\n   age: Age inherits Int\n}",
+  "query" : "given {\n   friends: Friend[] = [\n      { name: 'Jim', age: 20 },\n      { name: 'Jack', age: 80 },\n      { name: 'Alice', age: 75 },\n      { name: 'Bob', age: 30 }\n   ]\n}\nfind {\n   // Names of seniors (over 70)\n   seniorFriends: Name[] = friends.filter((Age) -> Age > 70) as Name[]\n   // Names of young adults (under 30)\n   youngFriends: Name[] = friends.filter((Age) -> Age < 30) as Name[]\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"seniorFriends\": [\n                  \"Jack\",\n                  \"Alice\"\n               ],\n               \"youngFriends\": [\n                  \"Jim\"\n               ]\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

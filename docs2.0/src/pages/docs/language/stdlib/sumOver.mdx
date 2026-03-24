@@ -1,0 +1,32 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: sumOver
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `vyne.aggregations.sumOver`
+
+## Signature
+
+```taxi
+declare query function sumOver(Any...):Decimal
+```
+
+## Description
+
+A Vyne-specific aggregate function used in analytical queries to compute a running or grouped sum.
+
+Used in `sumOver` window-style queries where values are aggregated across a result set.
+
+```taxi
+find { orders: Order[] } as {
+   totalRevenue: Decimal = sumOver(Amount)
+}
+```
+
+
+

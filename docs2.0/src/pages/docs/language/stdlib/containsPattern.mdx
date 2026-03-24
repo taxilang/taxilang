@@ -1,0 +1,46 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: containsPattern
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.containsPattern`
+
+## Signature
+
+```taxi
+declare extension function containsPattern(source: String, regex: String): Boolean
+```
+
+## Description
+
+Returns `true` if any part of the source string matches the provided regular expression.
+
+Uses partial matching — the regex does not need to match the entire string. Use `^` and `$` anchors for full-string matching.
+
+```taxi
+// Partial match — returns true if the string contains the pattern anywhere
+find {
+   startsWithHe: Boolean = "hello".containsPattern("^he")
+   containsEll: Boolean = "hello".containsPattern("ell")
+}
+```
+
+## Examples
+
+Demonstrates partial matching: anchor patterns, substring patterns, and non-matching patterns.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   matchesStart: Boolean = \"hello\".containsPattern(\"^he\")\n   matchesMiddle: Boolean = \"hello\".containsPattern(\"ell\")\n   noMatch: Boolean = \"hello\".containsPattern(\"xyz\")\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"matchesStart\": true, \"matchesMiddle\": true, \"noMatch\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

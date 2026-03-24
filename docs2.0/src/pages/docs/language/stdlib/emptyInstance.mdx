@@ -1,0 +1,43 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: emptyInstance
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.emptyInstance`
+
+## Signature
+
+```taxi
+declare extension function <A> emptyInstance(instanceType:lang.taxi.Type<A>): A
+```
+
+## Description
+
+Returns an instance of the requested type with all fields set to their empty state: scalars are `null`, collections are `[]`, and nested objects are recursively emptied.
+
+```taxi
+// Create a blank template of a type
+find {
+   blank: MyModel = emptyInstance(MyModel)
+}
+```
+
+## Examples
+
+Creates an empty instance of a model: scalars are null and collections are empty arrays.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "type UserTag inherits String\nmodel User {\n   name: UserName inherits String\n   age: Age inherits Int\n   tags: UserTag[]\n}",
+  "query" : "find {\n   empty: User = emptyInstance(User)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"empty\": {\"name\": null, \"age\": null, \"tags\": []}}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

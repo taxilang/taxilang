@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: min
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.min`
+
+## Signature
+
+```taxi
+declare extension function <T,A> min(collection: T[], callback: (T) -> A):A
+```
+
+## Description
+
+Returns the minimum value in the collection, computed by applying the selector function to each element.
+
+```taxi
+find { products: Product[] } as {
+   cheapest: Price = products.min((Product) -> Price)
+}
+```
+
+## Examples
+
+Returns the minimum price from a collection of products.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Product {\n   name: String\n   price: Price inherits Decimal\n}",
+  "query" : "given {\n   products: Product[] = [\n      { name: 'Apple', price: 1.50 },\n      { name: 'Banana', price: 0.75 },\n      { name: 'Cherry', price: 3.00 }\n   ]\n}\nfind {\n   minPrice: Price = products.min((Product) -> Price)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"minPrice\": 0.75}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

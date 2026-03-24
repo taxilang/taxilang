@@ -105,7 +105,7 @@ export function NavItems() {
         </Link>
       </li>
       <li className="whitespace-nowrap">
-        <Link href="/docs/language/stdlib">
+        <Link href="/docs/language/stdlib-summary">
           <a className="transition-colors hover:text-yellow-600 dark:hover:text-yellow-500">StdLib</a>
         </Link>
       </li>

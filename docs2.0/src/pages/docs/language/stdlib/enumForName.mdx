@@ -1,0 +1,43 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: enumForName
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.enumForName`
+
+## Signature
+
+```taxi
+declare extension function <T> enumForName(enumType: lang.taxi.Type<T>, enumName: String): T
+```
+
+## Description
+
+Returns the enum member matching the provided value string. Throws if no match is found.
+
+```taxi
+// Look up an enum member by its string value
+find {
+   status: OrderStatus = enumForName(OrderStatus, "PENDING")
+}
+```
+
+## Examples
+
+Looks up an enum member by its string value and returns it as a typed enum.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "enum OrderStatus { PENDING, APPROVED, REJECTED }",
+  "query" : "find {\n   status: OrderStatus = enumForName(OrderStatus, \"PENDING\")\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"status\": \"PENDING\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

@@ -1,0 +1,49 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: containsAny
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.containsAny`
+
+## Signature
+
+```taxi
+declare extension function <T> containsAny(collection: T[], searchTarget:T[]): Boolean
+```
+
+## Description
+
+Returns `true` if the collection contains at least one of the specified search targets.
+
+Returns `true` when `searchTargets` is empty (symmetrical with `containsAll`).
+
+```taxi
+// Check whether a product has any of a set of tags
+find {
+   isRelevant: Boolean = ProductTag[].containsAny(['sale', 'featured', 'new'])
+}
+```
+
+**Known limitation:** When the collection uses a semantic type (e.g. `ProductTag inherits String`),
+passing string literals as `searchTargets` always returns `false` due to a type comparison bug.
+See `problems/containsAny.md`. Use a `String[]` collection as a workaround.
+
+## Examples
+
+Returns `true` when the collection contains at least one of the search values, `false` when none match.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Product {\n   name: String\n   tags: String[]\n}",
+  "query" : "given {\n   product: Product = { name: 'Laptop', tags: ['electronics', 'portable', 'work'] }\n}\nfind {\n   hasAnyTag: Boolean = product.tags.containsAny(['gaming', 'portable'])\n   hasNone: Boolean = product.tags.containsAny(['gaming', 'sports'])\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"hasAnyTag\": true, \"hasNone\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

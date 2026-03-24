@@ -1,0 +1,45 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: getAtIndex
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.getAtIndex`
+
+## Signature
+
+```taxi
+declare extension function <T> getAtIndex(collection: T[], index: Int):T
+```
+
+## Description
+
+Returns the item at the provided index in the collection. Throws an error if the index is out of bounds.
+
+This function retrieves an element at a specific position in a collection, with zero-based indexing.
+
+```taxi
+// Get the second item in a list
+find { playlist: Playlist } as {
+   secondSong: playlist.songs.getAtIndex(1) // Note: index starts at 0
+}
+```
+
+## Examples
+
+Retrieves a song from a playlist by its zero-based index position.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Song {\n   title: Title inherits String\n   artist: Artist inherits String\n   duration: Duration inherits Int\n}\nmodel Playlist {\n   name: PlaylistName inherits String\n   songs: Song[]\n}",
+  "query" : "given {\n   playlist: Playlist = {\n      name: 'Road Trip Mix',\n      songs: [\n         { title: 'Highway Star', artist: 'Deep Purple', duration: 372 },\n         { title: 'Born to Run', artist: 'Bruce Springsteen', duration: 270 },\n         { title: 'Life in the Fast Lane', artist: 'Eagles', duration: 251 }\n      ]\n   }\n}\nfind {\n   playlistName: PlaylistName\n   firstSong: Song = Song[].getAtIndex(0)\n   secondSong: Song = Song[].getAtIndex(1)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"playlistName\": \"Road Trip Mix\",\n               \"firstSong\": {\"title\": \"Highway Star\", \"artist\": \"Deep Purple\", \"duration\": 372},\n               \"secondSong\": {\"title\": \"Born to Run\", \"artist\": \"Bruce Springsteen\", \"duration\": 270}\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

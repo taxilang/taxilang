@@ -1,0 +1,46 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: parseDate
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.dates.parseDate`
+
+## Signature
+
+```taxi
+declare function <T> parseDate(String):T
+```
+
+## Description
+
+Parses a string into a date, datetime, or instant value. The target type determines which parsing rules are applied.
+
+Supported target types are `Date`, `DateTime`, and `Instant`. Use `@Format` on the result field to control the output serialisation format.
+
+```taxi
+// Parse an ISO date string into a Date value
+find {
+   @Format("yyyy-MM-dd")
+   eventDate: Date = parseDate("2024-06-15")
+}
+```
+
+## Examples
+
+Parses ISO date and datetime strings into their respective Taxi date types.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   @Format(\"yyyy-MM-dd\")\n   asDate: Date = parseDate(\"2024-06-15\")\n   @Format(\"yyyy-MM-dd HH:mm:ss\")\n   asDateTime: DateTime = parseDate(\"2024-06-15T10:30:00\")\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"asDate\": \"2024-06-15\", \"asDateTime\": \"2024-06-15 10:30:00\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

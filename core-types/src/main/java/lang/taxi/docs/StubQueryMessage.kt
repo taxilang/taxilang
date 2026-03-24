@@ -5,7 +5,13 @@ package lang.taxi.docs
  * Copied to avoid adding a dependency to Orbital
  */
 data class StubQueryMessage(
+   /**
+    * The schema to use for the example.
+    */
    val schema: String,
+   /**
+    * The query
+    */
    val query: String,
    val parameters: Map<String, Any> = emptyMap(),
    val stubs: List<OperationStub> = emptyList(),

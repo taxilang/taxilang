@@ -27,9 +27,41 @@ A collection of functions for manipulating strings
 declare extension function applyFormat(input: Any, format: String):String
 ```
 
-Applies the provided format to the input string, and returns the result.
+Applies a format string to the input value using [Java Formatter](https://docs.oracle.com/javase/8/docs/api/java/util/Formatter.html) conventions.
 
-Formats follow the format defined by the [Java Formatter](https://docs.oracle.com/javase/8/docs/api/java/util/Formatter.html) conventions
+Accepts any value (string, number, date, etc.) as input. The format string controls width, padding, precision, and alignment.
+
+```taxi
+// Zero-pad an integer to 6 digits
+find { order: Order } as {
+   paddedId: order.id.applyFormat('%06d')
+}
+```
+
+### Examples
+Formats an integer with zero-padding using `%05d`.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   formatted: String = 42.applyFormat('%05d')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"formatted\": \"00042\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+Left-justifies a string in a 10-character wide field using `%-10s`.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   padded: String = 'hello'.applyFormat('%-10s')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"padded\": \"hello     \"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -40,6 +72,27 @@ Formats follow the format defined by the [Java Formatter](https://docs.oracle.co
 declare function concat(Any...):String
 ```
 
+Joins all provided values into a single string, in the order they are passed. Null values are omitted.
+
+```taxi
+find { person: Person } as {
+   fullName: String = concat(person.firstName, ' ', person.lastName)
+}
+```
+
+### Examples
+Concatenates multiple string values into a single string.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   greeting: String = concat('Hello', ', ', 'World')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"greeting\": \"Hello, World\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
 ------
 
 ### containsPattern
@@ -49,13 +102,30 @@ declare function concat(Any...):String
 declare extension function containsPattern(source: String, regex: String): Boolean
 ```
 
-Returns true if any part of the source string matches the provided regular expression.
-This allows partial matches and does not require the entire string to conform.
+Returns `true` if any part of the source string matches the provided regular expression.
 
-For example:
-  `"hello".containsPattern("^he")`   => `true`
-  `"hello".containsPattern("ell")`   => `true`
-  `"hello".containsPattern("xyz")`   => `false`
+Uses partial matching — the regex does not need to match the entire string. Use `^` and `$` anchors for full-string matching.
+
+```taxi
+// Partial match — returns true if the string contains the pattern anywhere
+find {
+   startsWithHe: Boolean = "hello".containsPattern("^he")
+   containsEll: Boolean = "hello".containsPattern("ell")
+}
+```
+
+### Examples
+Demonstrates partial matching: anchor patterns, substring patterns, and non-matching patterns.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   matchesStart: Boolean = \"hello\".containsPattern(\"^he\")\n   matchesMiddle: Boolean = \"hello\".containsPattern(\"ell\")\n   noMatch: Boolean = \"hello\".containsPattern(\"xyz\")\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"matchesStart\": true, \"matchesMiddle\": true, \"noMatch\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -66,7 +136,27 @@ For example:
 declare extension function containsString(source:String, valueToSearchFor:String):Boolean
 ```
 
-Returns true if `valueToSearchFor` within `source`
+Returns `true` if `source` contains `valueToSearchFor` as a substring. The match is case-sensitive.
+
+```taxi
+// Check if a description mentions a keyword
+find {
+   mentionsDiscount: Boolean = Description.containsString("discount")
+}
+```
+
+### Examples
+Checks for a case-sensitive substring match.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   hasSubstring: Boolean = \"hello world\".containsString(\"world\")\n   caseSensitive: Boolean = \"hello world\".containsString(\"World\")\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"hasSubstring\": true, \"caseSensitive\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -77,7 +167,27 @@ Returns true if `valueToSearchFor` within `source`
 declare extension function endsWith(source: String, valueToSearchFor:String):Boolean
 ```
 
-Returns true if the source string ends with the provided prefix
+Returns `true` if `source` ends with the specified suffix. The match is case-sensitive.
+
+```taxi
+// Check if a filename has a specific extension
+find {
+   isCsv: Boolean = FileName.endsWith(".csv")
+}
+```
+
+### Examples
+Checks whether a string ends with a given suffix, case-sensitively.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   hasSuffix: Boolean = \"hello.csv\".endsWith(\".csv\")\n   nope: Boolean = \"hello.csv\".endsWith(\".json\")\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"hasSuffix\": true, \"nope\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -88,7 +198,26 @@ Returns true if the source string ends with the provided prefix
 declare extension function indexOf(source:String, valueToSearchFor:String):Int
 ```
 
-Returns the index of `valueToSearchFor` within `source`
+Returns the zero-based index of `valueToSearchFor` within `source`, or `-1` if not found.
+
+```taxi
+find { path: FilePath } as {
+   dotPosition: Int = path.value.indexOf('.')
+}
+```
+
+### Examples
+Returns the index of a substring within a string, or `-1` if not found.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   pos: Int = indexOf('Hello World', 'World')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"pos\": 6}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -96,10 +225,29 @@ Returns the index of `valueToSearchFor` within `source`
 `taxi.stdlib.left`
 
 ```taxi
-declare extension function left(source:String,count:Int):String
+declare extension function left(source:String, count:Int):String
 ```
 
-Returns the left most characters from the source string
+Returns the leftmost `count` characters from a string.
+
+```taxi
+find { account: Account } as {
+   prefix: String = account.code.left(3)
+}
+```
+
+### Examples
+Extracts the first N characters from a string.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   firstFive: String = left('HelloWorld', 5)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"firstFive\": \"Hello\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -110,6 +258,27 @@ Returns the left most characters from the source string
 declare extension function length(String):Int
 ```
 
+Returns the number of characters in the string.
+
+```taxi
+find { message: Message } as {
+   charCount: Int = message.body.length()
+}
+```
+
+### Examples
+Returns the character count of a string.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   len: Int = length('Hello')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"len\": 5}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
 ------
 
 ### lowerCase
@@ -118,6 +287,27 @@ declare extension function length(String):Int
 ```taxi
 declare extension function lowerCase(String):String
 ```
+
+Converts all characters in the string to lower case.
+
+```taxi
+find { product: Product } as {
+   lowerName: String = product.name.lowerCase()
+}
+```
+
+### Examples
+Converts a string to lower case.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   lower: String = lowerCase('HELLO WORLD')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"lower\": \"hello world\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -129,11 +319,28 @@ declare extension function matches(source: String, regex: String): Boolean
 ```
 
 Returns `true` if the **entire** source string matches the provided regular expression.
-This uses full-string matching — the pattern must match the **entire string**, not just a part of it.
 
-For example:
-  `"hello".matches("^h.*o$")` => `true`
-  `"hello".matches("^he")`    => `false` (partial matches are not considered valid)
+Uses full-string matching — the pattern must match the entire string, not just a part of it.
+Use `containsPattern` for partial (substring) matching.
+
+```taxi
+find { account: Account } as {
+   isValidCode: Boolean = account.code.matches('^[A-Z]{3}-\d{4}$')
+}
+```
+
+### Examples
+Returns `true` only when the full string matches the regex pattern.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   fullMatch: Boolean = 'hello'.matches('^h.*o$')\n   noFullMatch: Boolean = 'hello'.matches('^he')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"fullMatch\": true, \"noFullMatch\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -141,13 +348,31 @@ For example:
 `taxi.stdlib.mid`
 
 ```taxi
-declare extension function mid(source: String,startIndex: Int,endIndex: Int):String
+declare extension function mid(source: String, startIndex: Int, endIndex: Int):String
 ```
 
-Returns the middle of a string, starting at the `startIndex`, and ending right before the `endIndex`.
+Returns the middle of a string, starting at `startIndex` (inclusive) and ending just before `endIndex` (exclusive).
 
-* `startIndex` - the start index (inclusive)
-* `endIndex` - the end index (exclusive)
+Uses zero-based indexing, identical to `String.substring()` in Java/Kotlin.
+
+```taxi
+find { order: Order } as {
+   yearPart: String = order.isoDate.mid(0, 4)
+}
+```
+
+### Examples
+Extracts a substring using a zero-based start index (inclusive) and end index (exclusive).
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   mid5: String = mid('HelloWorld', 5, 10)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"mid5\": \"World\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -158,8 +383,28 @@ Returns the middle of a string, starting at the `startIndex`, and ending right b
 declare extension function padEnd(input: String, length: Int, padWith: String):String
 ```
 
-Pads the string to the specified length at the end with the specified character or space.
-padWith should be a single character - if multiple characters are passed, only the first is used
+Pads the string to the specified total `length` by appending `padWith` characters at the end.
+
+`padWith` should be a single character — if multiple characters are passed, only the first is used.
+
+```taxi
+find { product: Product } as {
+   paddedCode: String = product.code.padEnd(10, ' ')
+}
+```
+
+### Examples
+Pads a string to the target length by appending characters on the right.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   padded: String = padEnd('hello', 10, '.')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"padded\": \"hello.....\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -170,8 +415,28 @@ padWith should be a single character - if multiple characters are passed, only t
 declare extension function padStart(input: String, length: Int, padWith: String):String
 ```
 
-Pads the string to the specified length at the start with the specified character or space.
-padWith should be a single character - if multiple characters are passed, only the first is used
+Pads the string to the specified total `length` by prepending `padWith` characters at the start.
+
+`padWith` should be a single character — if multiple characters are passed, only the first is used.
+
+```taxi
+find { order: Order } as {
+   paddedId: String = order.id.padStart(8, '0')
+}
+```
+
+### Examples
+Zero-pads a short string to the target length from the left.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   padded: String = padStart('42', 6, '0')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"padded\": \"000042\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -182,11 +447,26 @@ padWith should be a single character - if multiple characters are passed, only t
 declare extension function replace(source: String, searchValue:String, replacement: String):String
 ```
 
-Replaces the contents of the provided String, returning a new String
-Accepts three args:
- * `source: String`: The string to search
- * `searchValue: String`: The string to search for
- * `replacement: String`: The string to use as a replacement
+Replaces all occurrences of `searchValue` in `source` with `replacement`, returning a new string.
+
+```taxi
+find { order: Order } as {
+   cleanRef: String = order.reference.replace('-', '_')
+}
+```
+
+### Examples
+Replaces all occurrences of a substring with a new value.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   replaced: String = replace('Hello World', 'World', 'Taxi')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"replaced\": \"Hello Taxi\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -194,8 +474,29 @@ Accepts three args:
 `taxi.stdlib.right`
 
 ```taxi
-declare extension function right(source:String,count:Int):String
+declare extension function right(source:String, count:Int):String
 ```
+
+Returns the rightmost `count` characters from a string.
+
+```taxi
+find { account: Account } as {
+   suffix: String = account.code.right(4)
+}
+```
+
+### Examples
+Extracts the last N characters from a string.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   lastFive: String = right('HelloWorld', 5)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"lastFive\": \"World\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -206,7 +507,26 @@ declare extension function right(source:String,count:Int):String
 declare extension function startsWith(source: String, valueToSearchFor:String):Boolean
 ```
 
-Returns true if the source string begins with the provided prefix
+Returns `true` if `source` begins with the specified prefix. The match is case-sensitive.
+
+```taxi
+find { files: File[] } as {
+   tempFiles: File[] = files.filter((File) -> FileName.startsWith('tmp_'))
+}
+```
+
+### Examples
+Returns `true` when the string begins with the specified prefix, case-sensitively.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   hasPrefix: Boolean = 'Hello World'.startsWith('Hello')\n   noMatch: Boolean = 'Hello World'.startsWith('World')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"hasPrefix\": true, \"noMatch\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -217,6 +537,27 @@ Returns true if the source string begins with the provided prefix
 declare extension function trim(String):String
 ```
 
+Removes leading and trailing whitespace from a string.
+
+```taxi
+find { order: Order } as {
+   cleanRef: String = order.referenceCode.trim()
+}
+```
+
+### Examples
+Strips leading and trailing whitespace from a string.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   trimmed: String = '  hello world  '.trim()\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"trimmed\": \"hello world\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
 ------
 
 ### upperCase
@@ -225,6 +566,27 @@ declare extension function trim(String):String
 ```taxi
 declare extension function upperCase(String):String
 ```
+
+Converts all characters in the string to upper case.
+
+```taxi
+find { product: Product } as {
+   upperName: String = product.name.upperCase()
+}
+```
+
+### Examples
+Converts a string to upper case.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   upper: String = upperCase('hello world')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"upper\": \"HELLO WORLD\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ## Collections
 
@@ -237,7 +599,41 @@ A collection of functions for operating on collections
 declare extension function <T> all(collection: T[], predicate: (T) -> Boolean): Boolean
 ```
 
-Returns true if all of the items in the collection satisfy the predicate
+Returns `true` if every item in the collection satisfies the predicate, or `false` if any item does not.
+
+Returns `true` for an empty collection (vacuous truth).
+
+```taxi
+// Check if every task in a sprint is complete
+find { sprint: Sprint } as {
+   allDone: Boolean = sprint.tasks.all((task) -> task.isComplete)
+}
+```
+
+### Examples
+Returns `true` when every item in the collection satisfies the predicate.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Task {\n   name: String\n   isComplete: Boolean\n}",
+  "query" : "given {\n   tasks: Task[] = [\n      { name: 'Setup', isComplete: true },\n      { name: 'Build', isComplete: true },\n      { name: 'Deploy', isComplete: true }\n   ]\n}\nfind {\n   allDone: Boolean = tasks.all((task: Task) -> task.isComplete)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"allDone\": true}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+Returns `false` when at least one item does not satisfy the predicate.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Task {\n   name: String\n   isComplete: Boolean\n}",
+  "query" : "given {\n   tasks: Task[] = [\n      { name: 'Setup', isComplete: true },\n      { name: 'Build', isComplete: true },\n      { name: 'Deploy', isComplete: false }\n   ]\n}\nfind {\n   allDone: Boolean = tasks.all((task: Task) -> task.isComplete)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"allDone\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -257,7 +653,7 @@ This function ensures that every condition in a set must be satisfied.
 type CanPurchasePremium inherits Boolean by allOf(IsActive, HasSufficientFunds, IsVerified)
 ```
 
-#### Examples
+### Examples
 This example demonstrates how to use `allOf()` to verify if a user meets all required criteria for premium access.
 
 <PlaygroundSnippet scenario={{
@@ -279,7 +675,29 @@ This example demonstrates how to use `allOf()` to verify if a user meets all req
 declare extension function <T> any(collection: T[], predicate: (T) -> Boolean): Boolean
 ```
 
-Returns true if any of the items in the collection satisfy the predicate
+Returns `true` if at least one item in the collection satisfies the predicate, or `false` if none do.
+
+Returns `false` for an empty collection.
+
+```taxi
+// Check whether any order in a batch is flagged
+find { batch: OrderBatch } as {
+   needsAttention: Boolean = batch.orders.any((order) -> order.isFlagged)
+}
+```
+
+### Examples
+Returns `true` when at least one item satisfies the predicate.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Task {\n   name: String\n   isComplete: Boolean\n}",
+  "query" : "given {\n   tasks: Task[] = [\n      { name: 'Setup', isComplete: true },\n      { name: 'Build', isComplete: false },\n      { name: 'Deploy', isComplete: false }\n   ]\n}\nfind {\n   anyDone: Boolean = tasks.any((task: Task) -> task.isComplete)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"anyDone\": true}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -299,15 +717,15 @@ This function evaluates multiple conditions and returns true if any of them are 
 type IsVerified inherits Boolean by anyOf(HasEmailVerification, HasPhoneVerification, HasIdVerification)
 ```
 
-#### Examples
-This example demonstrates how to use `anyOf()` to verify if a user meets any of several verification criteria.
+### Examples
+Returns `true` when at least one of the provided boolean conditions is `true`. Define a computed type in the schema using `anyOf` for reuse across queries.
 
 <PlaygroundSnippet scenario={{
-  "schema" : "model User {\n   name: String\n   hasEmailVerification: Boolean\n   hasPhoneVerification: Boolean\n   hasIdVerification: Boolean\n}\ntype IsVerified inherits Boolean by anyOf(hasEmailVerification, hasPhoneVerification, hasIdVerification)",
-  "query" : "given {\n   user: User = {\n      name: 'Alice',\n      hasEmailVerification: false,\n      hasPhoneVerification: true,\n      hasIdVerification: false\n   }\n}\nfind {\n   name: user.name\n   isVerified: anyOf(user.hasEmailVerification, user.hasPhoneVerification, user.hasIdVerification)\n}",
+  "schema" : "model User {\n   name: String\n   hasEmailVerification: HasEmailVerification inherits Boolean\n   hasPhoneVerification: HasPhoneVerification inherits Boolean\n   hasIdVerification: HasIdVerification inherits Boolean\n}\ntype IsVerified inherits Boolean by anyOf(HasEmailVerification, HasPhoneVerification, HasIdVerification)",
+  "query" : "given {\n   user: User = {\n      name: 'Alice',\n      hasEmailVerification: false,\n      hasPhoneVerification: true,\n      hasIdVerification: false\n   }\n}\nfind {\n   name: user.name\n   isVerified: IsVerified\n}",
   "parameters" : { },
   "stubs" : [ ],
-  "expectedJson" : "{\n               \"name\": \"Alice\",\n               \"isVerified\": true\n            }",
+  "expectedJson" : "{\"name\": \"Alice\", \"isVerified\": true}",
   "stackId" : null
 }
 }></PlaygroundSnippet>
@@ -321,7 +739,28 @@ This example demonstrates how to use `anyOf()` to verify if a user meets any of 
 declare extension function <T> append(array1: T[], array2: T[]):T[]
 ```
 
-Returns a new collection, containing the elements of array1, then the elements of array2
+Returns a new collection containing the elements of the first array followed by the elements of the second array.
+
+Neither input array is modified.
+
+```taxi
+find { cart: ShoppingCart } as {
+   allItems: cart.regularItems.append(cart.saleItems)
+}
+```
+
+### Examples
+Concatenates two arrays, returning a new array with elements of the first followed by elements of the second.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Bag {\n   items: String[]\n}",
+  "query" : "given {\n   bag1: Bag = { items: ['apple', 'banana'] },\n   bag2: Bag = { items: ['cherry', 'date'] }\n}\nfind {\n   combined: String[] = bag1.items.append(bag2.items)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"combined\": [\"apple\", \"banana\", \"cherry\", \"date\"]}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -332,18 +771,31 @@ Returns a new collection, containing the elements of array1, then the elements o
 declare extension function <T> collectAllInstances(collection: lang.taxi.Type<T>): T
 ```
 
-Collects all the instances of the provided type that are currently available in the data context.
+Collects and merges all instances of a type from the current data context, bypassing ambiguity checks.
 
-         Normally, searches for an instance of a type will return null if the search leads to ambiguous results.
-         Specifically - when not using this function:
-          - searching for instance of T will return T if exactly one item is present, or null if >1
-          - searching for an instance of T[] will return:
-             - All T instances if there are no collections present
-             - However, if there is a collection of T present (T[]), then will return it
-             - If there are multiple collections of T present (T[][]), then the search is ambiguous, and returns null
+Without this function, a search for `T[]` will return null when multiple separate collections of `T` exist
+(the result is considered ambiguous). `collectAllInstances` disables that check and concatenates all found instances
+into a single collection.
 
+```taxi
+// Merge homeAddresses and workAddresses into one list
+find { person: Person } as {
+   allAddresses: collectAllInstances(Address)
+}
+```
 
-         This  method disables ambiguity checks, and returns all known instances, including merging all collections
+### Examples
+Merges all `Address` collections on a `Person` into a single flat list, even though they live in separate fields.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Address {\n   street: Street inherits String\n}\nmodel Person {\n   name: Name inherits String\n   homeAddresses: Address[]\n   workAddresses: Address[]\n}",
+  "query" : "given {\n   person: Person = {\n      name: 'Jimmy',\n      homeAddresses: [\n         { street: 'Oxford St' },\n         { street: 'Regent St' }\n      ],\n      workAddresses: [\n         { street: 'Tot St' }\n      ]\n   }\n}\nfind {\n   name: person.name\n   allAddresses: collectAllInstances(Address)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"name\": \"Jimmy\", \"allAddresses\": [{\"street\": \"Oxford St\"}, {\"street\": \"Regent St\"}, {\"street\": \"Tot St\"}]}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -365,15 +817,15 @@ find { user: User } as {
 }
 ```
 
-#### Examples
-undefined
+### Examples
+Checks whether a collection contains a specific element using type-based access.
 
 <PlaygroundSnippet scenario={{
   "schema" : "type Role inherits String\nmodel User {\n   username: Username inherits String\n   roles: Role[]\n}",
-  "query" : "          given {\n   user: User = {\n      username: 'AdminUser',\n      roles: ['USER', 'EDITOR', 'ADMIN']\n   }\n}\nfind {\n   username: user.username\n   // Using type selector\n   isAdmin: Boolean = Role[].contains(\"ADMIN\")\n   // Using field access\n   isGuest: Boolean = user.roles.contains(\"GUEST\")\n}",
+  "query" : "given {\n   user: User = {\n      username: 'AdminUser',\n      roles: ['USER', 'EDITOR', 'ADMIN']\n   }\n}\nfind {\n   username: Username\n   isAdmin: Boolean = Role[].contains('ADMIN')\n   isGuest: Boolean = Role[].contains('GUEST')\n}",
   "parameters" : { },
   "stubs" : [ ],
-  "expectedJson" : "{\n               \"username\": \"AdminUser\",\n               \"isAdmin\": true,\n               \"isGuest\": false\n            }",
+  "expectedJson" : "{\"username\": \"AdminUser\", \"isAdmin\": true, \"isGuest\": false}",
   "stackId" : null
 }
 }></PlaygroundSnippet>
@@ -387,14 +839,33 @@ undefined
 declare extension function <T> containsAll(collection: T[], searchTarget:T[]): Boolean
 ```
 
-Returns `true` if the collection contains all the specified search targets.
+Returns `true` if the collection contains every element in the search targets array.
+
+Returns `true` when `searchTargets` is empty (an empty set is a subset of every set).
 
 ```taxi
-// Check if a user's roles include admin privileges
-find { user: User } as {
-   hasAdminAccess: user.roles.containsAll("ADMIN", "HR")
+// Check whether a product has all required tags
+find {
+   hasCertified: Boolean = ProductTag[].containsAll(['certified', 'in-stock'])
 }
 ```
+
+**Known limitation:** When the collection uses a semantic type (e.g. `ProductTag inherits String`),
+passing string literals as `searchTargets` always returns `false` due to a type comparison bug.
+See `problems/containsAll.md`. Use a `String[]` collection as a workaround.
+
+### Examples
+Returns `true` when the collection contains all specified search values, `false` if any are missing.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Product {\n   name: String\n   tags: String[]\n}",
+  "query" : "given {\n   product: Product = { name: 'Laptop', tags: ['electronics', 'portable', 'work'] }\n}\nfind {\n   hasBothTags: Boolean = product.tags.containsAll(['electronics', 'portable'])\n   missingTag: Boolean = product.tags.containsAll(['electronics', 'gaming'])\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"hasBothTags\": true, \"missingTag\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -405,14 +876,33 @@ find { user: User } as {
 declare extension function <T> containsAny(collection: T[], searchTarget:T[]): Boolean
 ```
 
-Returns `true` if the collection contains all the specified search targets.
+Returns `true` if the collection contains at least one of the specified search targets.
+
+Returns `true` when `searchTargets` is empty (symmetrical with `containsAll`).
 
 ```taxi
-// Check if a user's roles include admin privileges
-find { user: User } as {
-   hasAdminAccess: user.roles.containsAny("ADMIN", "HR")
+// Check whether a product has any of a set of tags
+find {
+   isRelevant: Boolean = ProductTag[].containsAny(['sale', 'featured', 'new'])
 }
 ```
+
+**Known limitation:** When the collection uses a semantic type (e.g. `ProductTag inherits String`),
+passing string literals as `searchTargets` always returns `false` due to a type comparison bug.
+See `problems/containsAny.md`. Use a `String[]` collection as a workaround.
+
+### Examples
+Returns `true` when the collection contains at least one of the search values, `false` when none match.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Product {\n   name: String\n   tags: String[]\n}",
+  "query" : "given {\n   product: Product = { name: 'Laptop', tags: ['electronics', 'portable', 'work'] }\n}\nfind {\n   hasAnyTag: Boolean = product.tags.containsAny(['gaming', 'portable'])\n   hasNone: Boolean = product.tags.containsAny(['gaming', 'sports'])\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"hasAnyTag\": true, \"hasNone\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -434,7 +924,7 @@ find { user: User } as {
 }
 ```
 
-#### Examples
+### Examples
 This example demonstrates how to use `exactlyOne()` to retrieve the single active session for a user.
 
 <PlaygroundSnippet scenario={{
@@ -468,12 +958,12 @@ find { store: Store } as {
 }
 ```
 
-#### Examples
-This example demonstrates how to use `filter()` to find friends who meet a certain age criteria.
+### Examples
+Filters a collection by predicate, returning only matching elements. Uses type-based lambda for clean, semantic access.
 
 <PlaygroundSnippet scenario={{
   "schema" : "model Friend {\n   name: Name inherits String\n   age: Age inherits Int\n}",
-  "query" : "given {\n   friends: Friend[] = [\n      { name: 'Jim', age: 20 },\n      { name: 'Jack', age: 80 },\n      { name: 'Alice', age: 75 },\n      { name: 'Bob', age: 30 }\n   ]\n}\nfind {\n   // Names of seniors (over 70)\n   seniorFriends: Name[] = friends.filter((friend:Friend) -> friend.age > 70) as Name[]\n   // Names of young adults (under 30)\n   youngFriends: Name[] = friends.filter((friend:Friend) -> friend.age < 30) as Name[]\n}",
+  "query" : "given {\n   friends: Friend[] = [\n      { name: 'Jim', age: 20 },\n      { name: 'Jack', age: 80 },\n      { name: 'Alice', age: 75 },\n      { name: 'Bob', age: 30 }\n   ]\n}\nfind {\n   // Names of seniors (over 70)\n   seniorFriends: Name[] = friends.filter((Age) -> Age > 70) as Name[]\n   // Names of young adults (under 30)\n   youngFriends: Name[] = friends.filter((Age) -> Age < 30) as Name[]\n}",
   "parameters" : { },
   "stubs" : [ ],
   "expectedJson" : "{\n               \"seniorFriends\": [\n                  \"Jack\",\n                  \"Alice\"\n               ],\n               \"youngFriends\": [\n                  \"Jim\"\n               ]\n            }",
@@ -521,7 +1011,7 @@ find { account: Account } as {
 }
 ```
 
-#### Examples
+### Examples
 This example demonstrates how to use `first()` to retrieve the most recent transaction for an account.
 
 <PlaygroundSnippet scenario={{
@@ -554,15 +1044,15 @@ find { playlist: Playlist } as {
 }
 ```
 
-#### Examples
-This example demonstrates how to use `getAtIndex()` to retrieve a specific song from a playlist by its position.
+### Examples
+Retrieves a song from a playlist by its zero-based index position.
 
 <PlaygroundSnippet scenario={{
-  "schema" : "model Song {\n   title: String\n   artist: String\n   duration: Int\n}\n\nmodel Playlist {\n   name: String\n   songs: Song[]\n}",
-  "query" : "given {\n   playlist: Playlist = {\n      name: 'Road Trip Mix',\n      songs: [\n         { title: 'Highway Star', artist: 'Deep Purple', duration: 372 },\n         { title: 'Born to Run', artist: 'Bruce Springsteen', duration: 270 },\n         { title: 'Life in the Fast Lane', artist: 'Eagles', duration: 251 }\n      ]\n   }\n}\nfind {\n   playlistName: playlist.name\n   // Using property\n   firstSong: Song = playlist.songs.getAtIndex(0)\n   // using a type\n   secondSong: Song = Song[].getAtIndex(1)\n}",
+  "schema" : "model Song {\n   title: Title inherits String\n   artist: Artist inherits String\n   duration: Duration inherits Int\n}\nmodel Playlist {\n   name: PlaylistName inherits String\n   songs: Song[]\n}",
+  "query" : "given {\n   playlist: Playlist = {\n      name: 'Road Trip Mix',\n      songs: [\n         { title: 'Highway Star', artist: 'Deep Purple', duration: 372 },\n         { title: 'Born to Run', artist: 'Bruce Springsteen', duration: 270 },\n         { title: 'Life in the Fast Lane', artist: 'Eagles', duration: 251 }\n      ]\n   }\n}\nfind {\n   playlistName: PlaylistName\n   firstSong: Song = Song[].getAtIndex(0)\n   secondSong: Song = Song[].getAtIndex(1)\n}",
   "parameters" : { },
   "stubs" : [ ],
-  "expectedJson" : "{\n               \"playlistName\": \"Road Trip Mix\",\n               \"firstSong\": {\n                  \"title\": \"Highway Star\",\n                  \"artist\": \"Deep Purple\",\n                  \"duration\": 372\n               },\n               \"secondSong\": {\n                  \"title\": \"Born to Run\",\n                  \"artist\": \"Bruce Springsteen\",\n                  \"duration\": 270\n               }\n            }",
+  "expectedJson" : "{\n               \"playlistName\": \"Road Trip Mix\",\n               \"firstSong\": {\"title\": \"Highway Star\", \"artist\": \"Deep Purple\", \"duration\": 372},\n               \"secondSong\": {\"title\": \"Born to Run\", \"artist\": \"Bruce Springsteen\", \"duration\": 270}\n            }",
   "stackId" : null
 }
 }></PlaygroundSnippet>
@@ -576,7 +1066,26 @@ This example demonstrates how to use `getAtIndex()` to retrieve a specific song 
 declare extension function <T> ifEmpty(source:T[], defaultValue:T[]): T[]
 ```
 
-If the provided source array is empty, returns the value from the default
+Returns the source array if it is non-empty, otherwise returns the provided default array.
+
+```taxi
+find { order: Order } as {
+   tags: order.tags.ifEmpty(['untagged'])
+}
+```
+
+### Examples
+Returns the default array when the source is empty, or the source array when it has elements.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Order {\n   tags: String[]\n}",
+  "query" : "given {\n   emptyOrder: Order = { tags: [] },\n   fullOrder: Order = { tags: ['express', 'gift'] }\n}\nfind {\n   emptyTags: String[] = emptyOrder.tags.ifEmpty(['standard'])\n   fullTags: String[] = fullOrder.tags.ifEmpty(['standard'])\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"emptyTags\": [\"standard\"], \"fullTags\": [\"express\", \"gift\"]}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -587,7 +1096,26 @@ If the provided source array is empty, returns the value from the default
 declare extension function <T> indexOfItem(collection:T[], searchItem: T):Int
 ```
 
-Returns the index of an item within a collection, or -1 if the item was not found
+Returns the zero-based index of an item within a collection, or `-1` if the item was not found.
+
+```taxi
+find { playlist: Playlist } as {
+   songPosition: Int = playlist.tracks.indexOfItem('Bohemian Rhapsody')
+}
+```
+
+### Examples
+Returns the index of an item in the collection, or `-1` if not found.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Playlist {\n   tracks: String[]\n}",
+  "query" : "given {\n   playlist: Playlist = { tracks: ['Alpha', 'Beta', 'Gamma'] }\n}\nfind {\n   betaIndex: Int = playlist.tracks.indexOfItem('Beta')\n   missingIndex: Int = playlist.tracks.indexOfItem('Delta')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"betaIndex\": 1, \"missingIndex\": -1}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -609,15 +1137,15 @@ find { productA: Product, productB: Product } as {
 }
 ```
 
-#### Examples
-This example demonstrates how to use `intersection()` to find common elements between two collections.
+### Examples
+Returns only elements present in both collections, identified by value equality.
 
 <PlaygroundSnippet scenario={{
-  "schema" : "model Product {\n   name: String\n   tags: String[]\n}",
+  "schema" : "type Tag inherits String\nmodel Product {\n   name: ProductName inherits String\n   tags: Tag[]\n}",
   "query" : "given {\n   productA: Product = {\n      name: 'Smartphone',\n      tags: ['electronics', 'mobile', 'camera', 'touchscreen']\n   },\n   productB: Product = {\n      name: 'Digital Camera',\n      tags: ['electronics', 'camera', 'photography', 'zoom']\n   }\n}\nfind {\n   productAName: productA.name\n   productBName: productB.name\n   commonTags: intersection(productA.tags, productB.tags)\n}",
   "parameters" : { },
   "stubs" : [ ],
-  "expectedJson" : "{\n               \"productAName\": \"Smartphone\",\n               \"productBName\": \"Digital Camera\",\n               \"commonTags\": [\n                  \"electronics\",\n                  \"camera\"\n               ]\n            }",
+  "expectedJson" : "{\"productAName\": \"Smartphone\", \"productBName\": \"Digital Camera\", \"commonTags\": [\"electronics\", \"camera\"]}",
   "stackId" : null
 }
 }></PlaygroundSnippet>
@@ -631,7 +1159,26 @@ This example demonstrates how to use `intersection()` to find common elements be
 declare extension function <T> isNullOrEmpty(collection:T[]):Boolean
 ```
 
-Returns true if the provided collection is either null, or contains zero elements
+Returns `true` if the provided collection is either `null` or contains zero elements.
+
+```taxi
+find { order: Order } as {
+   hasNoItems: Boolean = order.items.isNullOrEmpty()
+}
+```
+
+### Examples
+Returns `true` for an empty collection, `false` when the collection has elements.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Bag {\n   items: String[]\n}",
+  "query" : "given {\n   emptyBag: Bag = { items: [] },\n   fullBag: Bag = { items: ['apple', 'banana'] }\n}\nfind {\n   emptyCheck: Boolean = emptyBag.items.isNullOrEmpty()\n   fullCheck: Boolean = fullBag.items.isNullOrEmpty()\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"emptyCheck\": true, \"fullCheck\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -642,7 +1189,26 @@ Returns true if the provided collection is either null, or contains zero element
 declare extension function <T> joinToString(values:T[], separator: String = ",", prefix: String? = null, postfix: String? = null): String
 ```
 
-Creates a string from all the elements separated using separator and using the given prefix and postfix if supplied. Null values are omitted
+Creates a string from all the elements separated using `separator` and using the given `prefix` and `postfix` if supplied. Null values are omitted.
+
+```taxi
+find { order: Order } as {
+   tagList: String = order.tags.joinToString(', ')
+}
+```
+
+### Examples
+Joins array elements into a single string, with optional separator, prefix, and postfix.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "given {\n   tags: String[] = ['alpha', 'beta', 'gamma']\n}\nfind {\n   joined: String = tags.joinToString(', ')\n   withBrackets: String = tags.joinToString(', ', '[', ']')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"joined\": \"alpha, beta, gamma\", \"withBrackets\": \"[alpha, beta, gamma]\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -664,7 +1230,7 @@ find { account: Account } as {
 }
 ```
 
-#### Examples
+### Examples
 This example demonstrates how to use `last()` to retrieve the oldest transaction for an account.
 
 <PlaygroundSnippet scenario={{
@@ -697,12 +1263,12 @@ find { order: Order } as {
 }
 ```
 
-#### Examples
-This example demonstrates how to use `listOf()` to create an inline collection and validate against it.
+### Examples
+Creates an inline collection to check if an order status is one of the valid values.
 
 <PlaygroundSnippet scenario={{
   "schema" : "model Order {\n   id: String\n   status: String\n}",
-  "query" : "given {\n   orders: Order[] = [\n      { id: 'order-1', status: 'PENDING' },\n      { id: 'order-2', status: 'SHIPPED' },\n      { id: 'order-3', status: 'CANCELED' }\n   ]\n}\nfind {\n   validOrders: Order[] = orders.filter((order:Order) ->\n      listOf('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED').contains(order.status)\n   )\n   invalidOrders: Order[] =  orders.filter((order:Order) ->\n      listOf('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED').contains(order.status) == false\n   )\n}",
+  "query" : "given {\n   orders: Order[] = [\n      { id: 'order-1', status: 'PENDING' },\n      { id: 'order-2', status: 'SHIPPED' },\n      { id: 'order-3', status: 'CANCELED' }\n   ]\n}\nfind {\n   validOrders: Order[] = orders.filter((order:Order) ->\n      listOf('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED').contains(order.status)\n   )\n   invalidOrders: Order[] = orders.filter((order:Order) ->\n      listOf('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED').contains(order.status) == false\n   )\n}",
   "parameters" : { },
   "stubs" : [ ],
   "expectedJson" : "{\n               \"validOrders\": [\n                  {\n                     \"id\": \"order-1\",\n                     \"status\": \"PENDING\"\n                  },\n                  {\n                     \"id\": \"order-2\",\n                     \"status\": \"SHIPPED\"\n                  }\n               ],\n               \"invalidOrders\": [\n                  {\n                     \"id\": \"order-3\",\n                     \"status\": \"CANCELED\"\n                  }\n               ]\n            }",
@@ -719,7 +1285,29 @@ This example demonstrates how to use `listOf()` to create an inline collection a
 declare extension function <T> none(collection: T[], predicate: (T) -> Boolean): Boolean
 ```
 
-Returns true if none of the items in the collection satisfy the predicate
+Returns `true` if none of the items in the collection satisfy the predicate.
+
+Returns `true` for an empty collection (vacuous truth).
+
+```taxi
+// Check that no task is overdue
+find { sprint: Sprint } as {
+   noOverdue: Boolean = sprint.tasks.none((task) -> task.isOverdue)
+}
+```
+
+### Examples
+Returns `true` when no item in the collection satisfies the predicate.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Task {\n   name: String\n   isComplete: Boolean\n}",
+  "query" : "given {\n   tasks: Task[] = [\n      { name: 'Setup', isComplete: true },\n      { name: 'Build', isComplete: true },\n      { name: 'Deploy', isComplete: true }\n   ]\n}\nfind {\n   noneIncomplete: Boolean = tasks.none((task: Task) -> task.isComplete == false)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"noneIncomplete\": true}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -739,15 +1327,15 @@ This function is useful for checking if none of multiple conditions apply.
 type NoPermissions inherits Boolean by noneOf(IsAdmin, IsEditor, IsViewer)
 ```
 
-#### Examples
-This example demonstrates how to use `noneOf()` to verify if a user lacks all specified roles.
+### Examples
+Returns `true` when all provided boolean conditions are `false`. Uses type-based access to combine semantic boolean types.
 
 <PlaygroundSnippet scenario={{
-  "schema" : "model User {\n   username: String\n   isAdmin: Boolean\n   isEditor: Boolean\n   isViewer: Boolean\n}\ntype HasNoAccess inherits Boolean by noneOf(isAdmin, isEditor, isViewer)",
-  "query" : "given {\n   user: User = {\n      username: 'GuestUser',\n      isAdmin: false,\n      isEditor: false,\n      isViewer: false\n   }\n}\nfind {\n   username: user.username\n   noAccess: noneOf(user.isAdmin, user.isEditor, user.isViewer)\n}",
+  "schema" : "type IsAdmin inherits Boolean\ntype IsEditor inherits Boolean\ntype IsViewer inherits Boolean\nmodel User {\n   username: Username inherits String\n   isAdmin: IsAdmin\n   isEditor: IsEditor\n   isViewer: IsViewer\n}",
+  "query" : "given {\n   user: User = {\n      username: 'GuestUser',\n      isAdmin: false,\n      isEditor: false,\n      isViewer: false\n   }\n}\nfind {\n   username: Username\n   hasNoAccess: Boolean = noneOf(IsAdmin, IsEditor, IsViewer)\n}",
   "parameters" : { },
   "stubs" : [ ],
-  "expectedJson" : "{\n               \"username\": \"GuestUser\",\n               \"noAccess\": true\n            }",
+  "expectedJson" : "{\"username\": \"GuestUser\", \"hasNoAccess\": true}",
   "stackId" : null
 }
 }></PlaygroundSnippet>
@@ -761,7 +1349,28 @@ This example demonstrates how to use `noneOf()` to verify if a user lacks all sp
 declare extension function <T> orEmpty(source:T[]): T[]
 ```
 
-If the provided source array is null, returns an empty collection
+Returns the source array unchanged if it is non-null, or an empty array if it is `null`.
+
+Useful for safely chaining collection operations on potentially-null fields.
+
+```taxi
+find { user: User } as {
+   roles: user.roles.orEmpty().joinToString(', ')
+}
+```
+
+### Examples
+Returns the collection unchanged when non-null. Use `.orEmpty()` to safely chain operations on nullable arrays.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Cart {\n   items: String[]\n}",
+  "query" : "given {\n   cart: Cart = { items: ['apple', 'banana'] }\n}\nfind {\n   items: String[] = cart.items.orEmpty()\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"items\": [\"apple\", \"banana\"]}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -783,15 +1392,15 @@ find { inventory: Inventory } as {
 }
 ```
 
-#### Examples
-undefined
+### Examples
+Finds the single product matching the given SKU. Throws if no match or more than one match is found.
 
 <PlaygroundSnippet scenario={{
-  "schema" : "model Product {\n   name: ProductName inherits String\n   sku: SKU inherits String\n   price: Price inherits Decimal\n}\n\nmodel Inventory {\n   products: Product[]\n}",
-  "query" : "          given {\n   inventory: Inventory = {\n      products: [\n         { name: 'Laptop', sku: 'LT-001', price: 1200.00 },\n         { name: 'Smartphone', sku: 'SP-002', price: 999.99 },\n         { name: 'Tablet', sku: 'TB-003', price: 499.50 }\n      ]\n   }\n}\nfind {\n   smartphoneDetails: Product = inventory.products.single((product: Product) -> product.sku == 'SP-002')\n}",
+  "schema" : "model Product {\n   name: ProductName inherits String\n   sku: SKU inherits String\n   price: Price inherits Decimal\n}\nmodel Inventory {\n   products: Product[]\n}",
+  "query" : "given {\n   inventory: Inventory = {\n      products: [\n         { name: 'Laptop', sku: 'LT-001', price: 1200.00 },\n         { name: 'Smartphone', sku: 'SP-002', price: 999.99 },\n         { name: 'Tablet', sku: 'TB-003', price: 499.50 }\n      ]\n   }\n}\nfind {\n   smartphoneDetails: Product = inventory.products.single((product: Product) -> product.sku == 'SP-002')\n}",
   "parameters" : { },
   "stubs" : [ ],
-  "expectedJson" : "{\n               \"smartphoneDetails\": {\n                  \"name\": \"Smartphone\",\n                  \"sku\": \"SP-002\",\n                  \"price\": 999.99\n               }\n            }",
+  "expectedJson" : "{\"smartphoneDetails\": {\"name\": \"Smartphone\", \"sku\": \"SP-002\", \"price\": 999.99}}",
   "stackId" : null
 }
 }></PlaygroundSnippet>
@@ -817,15 +1426,15 @@ find { inventory: Inventory } as {
 }
 ```
 
-#### Examples
-undefined
+### Examples
+Looks up products by SKU using a cached index. Faster than `single()` when querying the same collection multiple times.
 
 <PlaygroundSnippet scenario={{
-  "schema" : "model Product {\n   name: Name inherits String\n   sku: SKU inherits String\n}\n\nmodel Inventory {\n   products: Product[]\n}",
-  "query" : "          given {\n   inventory: Inventory = {\n      products: [\n         { name: 'Laptop', sku: 'LT-001'},\n         { name: 'Smartphone', sku: 'SP-002'},\n         { name: 'Tablet', sku: 'TB-003' }\n      ]\n   }\n}\nfind {\n   // Find products by SKU code\n   laptop: inventory.products.singleBy((product:Product) -> product.sku, 'LT-001' as SKU)\n   // Alternative syntax, using types for selection\n   tablet: inventory.products.singleBy((Product) -> SKU, 'TB-003' as SKU)\n}",
+  "schema" : "model Product {\n   name: Name inherits String\n   sku: SKU inherits String\n}\nmodel Inventory {\n   products: Product[]\n}",
+  "query" : "given {\n   inventory: Inventory = {\n      products: [\n         { name: 'Laptop', sku: 'LT-001' },\n         { name: 'Smartphone', sku: 'SP-002' },\n         { name: 'Tablet', sku: 'TB-003' }\n      ]\n   }\n}\nfind {\n   laptop: inventory.products.singleBy((Product) -> SKU, 'LT-001' as SKU)\n   tablet: inventory.products.singleBy((Product) -> SKU, 'TB-003' as SKU)\n}",
   "parameters" : { },
   "stubs" : [ ],
-  "expectedJson" : "{\n   \"laptop\": {\n      \"name\": \"Laptop\",\n      \"sku\": \"LT-001\"\n   },\n   \"tablet\": {\n      \"name\": \"Tablet\",\n      \"sku\": \"TB-003\"\n   }\n}",
+  "expectedJson" : "{\"laptop\": {\"name\": \"Laptop\", \"sku\": \"LT-001\"}, \"tablet\": {\"name\": \"Tablet\", \"sku\": \"TB-003\"}}",
   "stackId" : null
 }
 }></PlaygroundSnippet>
@@ -839,7 +1448,26 @@ undefined
 declare extension function <T> size(collection:T[]):Int
 ```
 
-Returns the number of elements in the collection
+Returns the number of elements in the collection.
+
+```taxi
+find { orders: Order[] } as {
+   orderCount: Int = orders.size()
+}
+```
+
+### Examples
+Returns the number of elements in the collection.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Cart {\n   items: String[]\n}",
+  "query" : "given {\n   cart: Cart = { items: ['apple', 'banana', 'cherry'] }\n}\nfind {\n   itemCount: Int = cart.items.size()\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"itemCount\": 3}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ## Dates
 
@@ -852,6 +1480,29 @@ Mess about with time. Flux capacitor not included
 declare function <T> addDays(T, Int):T
 ```
 
+Adds the specified number of days to a date, datetime, or instant. Use a negative value to subtract days.
+
+```taxi
+// Calculate an expiry date 90 days from today
+find {
+   @Format("yyyy-MM-dd")
+   expiresOn: Date = addDays(Date, 90)
+}
+```
+
+### Examples
+Adds days to a date — positive to advance, negative to go back.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "given {\n   start: Date = parseDate(\"2024-01-15\")\n}\nfind {\n   @Format(\"yyyy-MM-dd\")\n   nextWeek: Date = addDays(Date, 7)\n   @Format(\"yyyy-MM-dd\")\n   lastMonth: Date = addDays(Date, -30)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"nextWeek\": \"2024-01-22\", \"lastMonth\": \"2023-12-16\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
 ------
 
 ### addMinutes
@@ -860,6 +1511,28 @@ declare function <T> addDays(T, Int):T
 ```taxi
 declare function <T> addMinutes(T, Int):T
 ```
+
+Adds the specified number of minutes to a datetime or instant. Use a negative value to subtract minutes.
+
+```taxi
+// Schedule a meeting 30 minutes from the event start
+find {
+   meetingEnd: DateTime = addMinutes(DateTime, 30)
+}
+```
+
+### Examples
+Adds minutes to a datetime — positive to advance, negative to go back.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "given {\n   start: DateTime = parseDate(\"2024-01-15T10:30:00\")\n}\nfind {\n   @Format(\"yyyy-MM-dd HH:mm\")\n   plusFive: DateTime = addMinutes(DateTime, 5)\n   @Format(\"yyyy-MM-dd HH:mm\")\n   minusTwo: DateTime = addMinutes(DateTime, -120)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"plusFive\": \"2024-01-15 10:35\", \"minusTwo\": \"2024-01-15 08:30\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -870,6 +1543,28 @@ declare function <T> addMinutes(T, Int):T
 declare function <T> addSeconds(T, Int):T
 ```
 
+Adds the specified number of seconds to a datetime or instant. Use a negative value to subtract seconds.
+
+```taxi
+// Expire a token 3600 seconds (1 hour) from now
+find {
+   expiresAt: Instant = addSeconds(Instant, 3600)
+}
+```
+
+### Examples
+Adds seconds to an instant — positive to advance, negative to go back.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "given {\n   start: Instant = parseDate(\"2024-01-15T10:30:00Z\")\n}\nfind {\n   @Format(\"yyyy-MM-dd HH:mm:ss\")\n   plusThirty: Instant = addSeconds(Instant, 30)\n   @Format(\"yyyy-MM-dd HH:mm:ss\")\n   minusTen: Instant = addSeconds(Instant, -10)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"plusThirty\": \"2024-01-15 10:30:30\", \"minusTen\": \"2024-01-15 10:29:50\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
 ------
 
 ### currentDate
@@ -877,6 +1572,15 @@ declare function <T> addSeconds(T, Int):T
 
 ```taxi
 declare function currentDate():Date
+```
+
+Returns the current local date (no time component).
+
+```taxi
+find {
+   @Format("yyyy-MM-dd")
+   today: Date = currentDate()
+}
 ```
 
 ------
@@ -888,6 +1592,15 @@ declare function currentDate():Date
 declare function currentDateTime():DateTime
 ```
 
+Returns the current local date and time.
+
+```taxi
+find {
+   @Format("yyyy-MM-dd HH:mm:ss")
+   now: DateTime = currentDateTime()
+}
+```
+
 ------
 
 ### currentTime
@@ -895,6 +1608,15 @@ declare function currentDateTime():DateTime
 
 ```taxi
 declare function currentTime():Time
+```
+
+Returns the current local time (no date component).
+
+```taxi
+find {
+   @Format("HH:mm:ss")
+   timeNow: Time = currentTime()
+}
 ```
 
 ------
@@ -906,6 +1628,18 @@ declare function currentTime():Time
 declare function now():Instant
 ```
 
+Returns the current UTC instant.
+
+The output changes every time the function is called. Use `@Format` to control how the instant is serialised in query output.
+
+```taxi
+// Stamp the current time on a record
+find {
+   @Format("yyyy-MM-dd'T'HH:mm:ssXXX")
+   processedAt: Instant = now()
+}
+```
+
 ------
 
 ### parseDate
@@ -914,6 +1648,31 @@ declare function now():Instant
 ```taxi
 declare function <T> parseDate(String):T
 ```
+
+Parses a string into a date, datetime, or instant value. The target type determines which parsing rules are applied.
+
+Supported target types are `Date`, `DateTime`, and `Instant`. Use `@Format` on the result field to control the output serialisation format.
+
+```taxi
+// Parse an ISO date string into a Date value
+find {
+   @Format("yyyy-MM-dd")
+   eventDate: Date = parseDate("2024-06-15")
+}
+```
+
+### Examples
+Parses ISO date and datetime strings into their respective Taxi date types.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   @Format(\"yyyy-MM-dd\")\n   asDate: Date = parseDate(\"2024-06-15\")\n   @Format(\"yyyy-MM-dd HH:mm:ss\")\n   asDateTime: DateTime = parseDate(\"2024-06-15T10:30:00\")\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"asDate\": \"2024-06-15\", \"asDateTime\": \"2024-06-15 10:30:00\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ## Math
 
@@ -926,9 +1685,29 @@ Numbers 'n' such. Maths for the brits.
 declare extension function average(values: Any[]):Decimal
 ```
 
-Returns an average value of elements in the collection.
-Function is defined as Any[], but only because of a lack of overloads in the
-language currently. Passing non-numeric values will cause exceptions
+Returns the arithmetic mean of a collection of numeric values.
+
+All values in the collection must be of the same numeric primitive type (Int, Decimal, etc.).
+Returns null if the collection is empty or contains non-numeric values.
+
+```taxi
+find { order: Order } as {
+   averageItemPrice: Decimal = order.items.map((Item) -> Item::price).average()
+}
+```
+
+### Examples
+Computes the average score from a collection of items.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Item {\n   score: Score inherits Decimal\n}",
+  "query" : "given {\n   items: Item[] = [\n      { score: 80.0 },\n      { score: 90.0 },\n      { score: 70.0 }\n   ]\n}\nfind {\n   avg: Decimal = average(items.map((item: Item) -> item.score))\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"avg\": 80.0}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -939,6 +1718,27 @@ language currently. Passing non-numeric values will cause exceptions
 declare extension function <T,A> max(collection: T[], callback: (T) -> A):A
 ```
 
+Returns the maximum value in the collection, computed by applying the selector function to each element.
+
+```taxi
+find { products: Product[] } as {
+   mostExpensive: Price = products.max((Product) -> Price)
+}
+```
+
+### Examples
+Returns the maximum price from a collection of products.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Product {\n   name: String\n   price: Price inherits Decimal\n}",
+  "query" : "given {\n   products: Product[] = [\n      { name: 'Apple', price: 1.50 },\n      { name: 'Banana', price: 0.75 },\n      { name: 'Cherry', price: 3.00 }\n   ]\n}\nfind {\n   maxPrice: Price = products.max((Product) -> Price)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"maxPrice\": 3.00}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
 ------
 
 ### min
@@ -947,6 +1747,27 @@ declare extension function <T,A> max(collection: T[], callback: (T) -> A):A
 ```taxi
 declare extension function <T,A> min(collection: T[], callback: (T) -> A):A
 ```
+
+Returns the minimum value in the collection, computed by applying the selector function to each element.
+
+```taxi
+find { products: Product[] } as {
+   cheapest: Price = products.min((Product) -> Price)
+}
+```
+
+### Examples
+Returns the minimum price from a collection of products.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Product {\n   name: String\n   price: Price inherits Decimal\n}",
+  "query" : "given {\n   products: Product[] = [\n      { name: 'Apple', price: 1.50 },\n      { name: 'Banana', price: 0.75 },\n      { name: 'Cherry', price: 3.00 }\n   ]\n}\nfind {\n   minPrice: Price = products.min((Product) -> Price)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"minPrice\": 0.75}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -957,7 +1778,28 @@ declare extension function <T,A> min(collection: T[], callback: (T) -> A):A
 declare extension function round(value: Decimal, precision: Int = 0): Decimal
 ```
 
-Rounds a decimal value to the specified precision.
+Rounds a decimal value to the specified number of decimal places.
+
+`precision` defaults to `0` (round to nearest integer).
+
+```taxi
+find { measurement: Measurement } as {
+   rounded: Decimal = measurement.value.round(2)
+}
+```
+
+### Examples
+Rounds a decimal to the specified number of decimal places.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   rounded2: Decimal = round(3.14159, 2)\n   rounded0: Decimal = round(3.7, 0)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"rounded2\": 3.14, \"rounded0\": 4.0}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -967,6 +1809,27 @@ Rounds a decimal value to the specified precision.
 ```taxi
 declare extension function <T,A> sum(collection: T[], callback: (T) -> A):A
 ```
+
+Returns the sum of values in the collection, computed by applying the selector function to each element.
+
+```taxi
+find { order: Order } as {
+   total: Price = order.items.sum((Item) -> Price)
+}
+```
+
+### Examples
+Sums a numeric field across all elements of a collection.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Product {\n   name: String\n   price: Price inherits Decimal\n}",
+  "query" : "given {\n   products: Product[] = [\n      { name: 'Apple', price: 1.50 },\n      { name: 'Banana', price: 0.75 },\n      { name: 'Cherry', price: 3.00 }\n   ]\n}\nfind {\n   totalPrice: Price = products.sum((Product) -> Price)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"totalPrice\": 5.25}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ## Objects
 
@@ -979,8 +1842,27 @@ Utilities for dealing with equality, etc
 declare extension function <A> emptyInstance(instanceType:lang.taxi.Type<A>): A
 ```
 
-Returns an instance of the requested type, with all properties empty.
-Scalars are null, collections are empty, and object types are recursed into, also populated as empty
+Returns an instance of the requested type with all fields set to their empty state: scalars are `null`, collections are `[]`, and nested objects are recursively emptied.
+
+```taxi
+// Create a blank template of a type
+find {
+   blank: MyModel = emptyInstance(MyModel)
+}
+```
+
+### Examples
+Creates an empty instance of a model: scalars are null and collections are empty arrays.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "type UserTag inherits String\nmodel User {\n   name: UserName inherits String\n   age: Age inherits Int\n   tags: UserTag[]\n}",
+  "query" : "find {\n   empty: User = emptyInstance(User)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"empty\": {\"name\": null, \"age\": null, \"tags\": []}}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -990,6 +1872,27 @@ Scalars are null, collections are empty, and object types are recursed into, als
 ```taxi
 declare extension function <A,B> equals(a:A, b:B): Boolean
 ```
+
+Returns `true` if two values are equal. Equality is checked by value and type — values of different semantic types are not equal even if their underlying values match.
+
+```taxi
+find {
+   match: Boolean = OrderStatus.equals("PENDING")
+}
+```
+
+### Examples
+Compares two string values — matching pair returns true, non-matching returns false.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   same: Boolean = \"hello\".equals(\"hello\")\n   different: Boolean = \"hello\".equals(\"world\")\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"same\": true, \"different\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ## Enums
 
@@ -1002,7 +1905,27 @@ Utilities for enums
 declare extension function <T> enumForName(enumType: lang.taxi.Type<T>, enumName: String): T
 ```
 
-Returns the enum value for the provided name
+Returns the enum member matching the provided value string. Throws if no match is found.
+
+```taxi
+// Look up an enum member by its string value
+find {
+   status: OrderStatus = enumForName(OrderStatus, "PENDING")
+}
+```
+
+### Examples
+Looks up an enum member by its string value and returns it as a typed enum.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "enum OrderStatus { PENDING, APPROVED, REJECTED }",
+  "query" : "find {\n   status: OrderStatus = enumForName(OrderStatus, \"PENDING\")\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"status\": \"PENDING\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -1013,10 +1936,28 @@ Returns the enum value for the provided name
 declare extension function <T> hasEnumNamed(enumType: lang.taxi.Type<T>, enumName: String): Boolean
 ```
 
-Indicates if the enum contains an entry for the provided key.
+Returns `true` if the enum has an explicitly declared member matching the provided name.
 
-Ignores default entries, so an enum with a default will return false to enumContains()
- if the key isn't explicitly defined.
+Ignores default entries — an enum with a default value will return `false` for a name that is only matched by the default, not by an explicit declaration.
+
+```taxi
+find {
+   valid: Boolean = hasEnumNamed(OrderStatus, "PENDING")
+}
+```
+
+### Examples
+Returns true for a declared enum member name, false for a name not in the enum.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "enum OrderStatus { PENDING, APPROVED, REJECTED }",
+  "query" : "find {\n   hasPending: Boolean = hasEnumNamed(OrderStatus, \"PENDING\")\n   hasUnknown: Boolean = hasEnumNamed(OrderStatus, \"UNKNOWN\")\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"hasPending\": true, \"hasUnknown\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ## Aggregations
 
@@ -1027,6 +1968,16 @@ Functions for aggregating data within transformations.
 
 ```taxi
 declare query function sumOver(Any...):Decimal
+```
+
+A Vyne-specific aggregate function used in analytical queries to compute a running or grouped sum.
+
+Used in `sumOver` window-style queries where values are aggregated across a result set.
+
+```taxi
+find { orders: Order[] } as {
+   totalRevenue: Decimal = sumOver(Amount)
+}
 ```
 
 ## Functional
@@ -1040,18 +1991,17 @@ Functions that are functionally functions. Funky
 declare extension function <T,A> fold(collection: T[], initial: A, callback: (T,A) -> A):A
 ```
 
-Iterates over a collection, combining elements to produce a single accumulated result.
+Iterates over a collection, combining elements with an accumulator to produce a single result.
 
- Example:
+Unlike `reduce`, `fold` starts with an explicit `initial` value as the accumulator.
 
 ```taxi
-// Given:
+// Compute a weighted sum
 model Entry {
-   weight:Weight inherits Int
-   score:Score inherits Int
+   weight: Weight inherits Int
+   score: Score inherits Int
 }
-
-type WeightedAverage by (Entry[]) -> Entry[].fold(0, (Entry, Int) -> Int + (Weight*Score))
+type WeightedTotal by (Entry[]) -> Entry[].fold(0, (Entry, Int) -> Int + (Weight * Score))
 ```
 
 ------
@@ -1063,27 +2013,34 @@ type WeightedAverage by (Entry[]) -> Entry[].fold(0, (Entry, Int) -> Int + (Weig
 declare extension function <T,A> map(collection: T[], callback: (T) -> A):A[]
 ```
 
-Performs a mapping transformation function on every member of the provided array.
+Applies a transformation function to every element in a collection, returning a new array of the results.
 
-If the callback is in the form of a type expression, then each input value is converted
-into an instance of that type.
-
-For example:
+If the callback is a type expression, each element is converted to that type:
 
 ```taxi
-// Will convert Person[] to Person2[]
-Person[].map((Person) -> Person2)
+// Convert Person[] to Name[]
+Person[].map((Person) -> Name)
 ```
 
-If the callback is in the form of any other type of expression, then that expression is
-evaluated against each member of the input array.
-
-For example:
+If the callback is any other expression, it is evaluated against each element:
 
 ```taxi
-// Will return an array of Title, where the text has been converted to uppercase
-Film[].map ( (Title) -> Title.upperCase() )
+// Return an array of uppercased titles
+Film[].map((Title) -> Title.upperCase())
 ```
+
+### Examples
+Extracts a field from each object in a collection, returning a typed array.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Product {\n   name: Name inherits String\n   price: Price inherits Decimal\n}",
+  "query" : "given {\n   products: Product[] = [\n      { name: 'Apple', price: 1.50 },\n      { name: 'Banana', price: 0.75 },\n      { name: 'Cherry', price: 3.00 }\n   ]\n}\nfind {\n   names: Name[] = products.map((Product) -> Name)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"names\": [\"Apple\", \"Banana\", \"Cherry\"]}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -1092,6 +2049,17 @@ Film[].map ( (Title) -> Title.upperCase() )
 
 ```taxi
 declare extension function <T,A> reduce(collection: T[], callback: (T,A) -> A):A
+```
+
+Reduces a collection to a single value by applying a combining function to each element and the accumulated result.
+
+Unlike `fold`, there is no initial value — the first element of the collection is used as the starting accumulator.
+
+```taxi
+// Sum a list of integers
+find {
+   total: Int = numbers.reduce((Int, Int) -> Int + Int)
+}
 ```
 
 ## Transformations
@@ -1105,16 +2073,29 @@ Functions for converting between types
 declare extension function <T> convert(source: Any, targetType: lang.taxi.Type<T>): T
 ```
 
-Converts the provided source into the target type reference.
- Conversions are performed locally, using only the data provided in source - ie.,
- no services or graph searches are performed.
+Converts a source value to the target type using only the data already available — no service calls are made.
 
- This method is less powerful than using a standard projection (eg., A as B), because:
+This is faster than a full projection (`source as TargetType`), but less powerful: only the fields present in the source are mapped. Missing fields are not discovered from services.
 
-  - Only the exact facts passed in the source are considered
-  - No graph searches or remote invocations are performed
+```taxi
+// Convert an Order to a Receipt using only the Order's own fields
+find {
+   receipt: Receipt = Order.convert(Receipt)
+}
+```
 
-  As a result, it's also more performant.
+### Examples
+Converts an Order to a Receipt model using only the fields present in the source, without calling any services.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Order {\n   id: OrderId inherits String\n   amount: Amount inherits Decimal\n}\nmodel Receipt {\n   id: OrderId\n   amount: Amount\n}",
+  "query" : "given {\n   order: Order = { id: 'O1', amount: 99.99 }\n}\nfind {\n   receipt: Receipt = Order.convert(Receipt)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"receipt\": {\"id\": \"O1\", \"amount\": 99.99}}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ------
 
@@ -1125,16 +2106,72 @@ Converts the provided source into the target type reference.
 declare extension function toRawType(source: Any):Any
 ```
 
-Removes the semantic typing from the provided scalar value, returning a scalar value
-typed with the raw primitive type.
+Removes the semantic typing from a scalar value, returning it typed as its raw primitive.
 
-This can be useful if trying to compare values ignoring their type.
+Useful when you need to compare values by their raw content while ignoring their semantic type.
 
-- If called with an Array, will remove semantic types of all members. The array should only contain scalar values.
-- If called with a scalar value, will remove the semantic type of the value
+- For a scalar value: strips the semantic type, returning the underlying primitive.
+- For an array of scalars: strips the semantic type from each element.
 
-Not supported for calling on an object (or array of objects), as Taxi's type system
-is structural, and needs to know the structure of the type it's operating on.
+Not supported on objects or arrays of objects.
+
+```taxi
+find { order: Order } as {
+   rawId: String = order.id.toRawType()
+}
+```
+
+### Examples
+Strips the semantic type from a typed scalar, returning the raw primitive value.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "type OrderId inherits String",
+  "query" : "given {\n   orderId: OrderId = 'ORD-001'\n}\nfind {\n   rawId: String = orderId.toRawType()\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"rawId\": \"ORD-001\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+## Parsing
+
+Functions for converting between types
+
+### parseJson
+`taxi.stdlib.parseJson`
+
+```taxi
+declare extension function <T> parseJson(source: String, type: Type<T>):T
+```
+
+Parses a JSON string into the specified type.
+
+This is useful when a field contains a JSON payload encoded as a string (e.g., from a message queue or API response),
+and you need to deserialize it into a structured type.
+
+Computed fields and functions on the target type are evaluated after parsing.
+
+```taxi
+model Event {
+   name : String
+   payload : String
+   parsed : Payload = parseJson(this.payload, Payload)
+}
+```
+
+### Examples
+Parses a JSON string embedded in a model field into a structured type.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Address {\n   city: String\n   country: String\n}\nmodel Customer {\n   name: String\n   addressJson: String\n   address: Address = parseJson(this.addressJson, Address)\n}",
+  "query" : "given {\n   customer: Customer = {\n      name: 'Alice',\n      addressJson: '{ \"city\": \"London\", \"country\": \"UK\" }'\n   }\n}\nfind {\n   name: customer.name\n   address: customer.address\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"name\": \"Alice\", \"address\": {\"city\": \"London\", \"country\": \"UK\"}}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
 ## Errors
 
@@ -1145,4 +2182,15 @@ Functions for creating and handling errors
 
 ```taxi
 declare function throw(error:Any):Nothing
+```
+
+Throws an error, halting execution. Useful for enforcing invariants inline.
+
+```taxi
+find { order: Order } as {
+   status: OrderStatus = when {
+      OrderStatus == 'INVALID' -> throw('Order status is invalid')
+      else -> OrderStatus
+   }
+}
 ```

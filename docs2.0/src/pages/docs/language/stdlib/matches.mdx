@@ -1,0 +1,45 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: matches
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.matches`
+
+## Signature
+
+```taxi
+declare extension function matches(source: String, regex: String): Boolean
+```
+
+## Description
+
+Returns `true` if the **entire** source string matches the provided regular expression.
+
+Uses full-string matching — the pattern must match the entire string, not just a part of it.
+Use `containsPattern` for partial (substring) matching.
+
+```taxi
+find { account: Account } as {
+   isValidCode: Boolean = account.code.matches('^[A-Z]{3}-\d{4}$')
+}
+```
+
+## Examples
+
+Returns `true` only when the full string matches the regex pattern.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   fullMatch: Boolean = 'hello'.matches('^h.*o$')\n   noFullMatch: Boolean = 'hello'.matches('^he')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"fullMatch\": true, \"noFullMatch\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

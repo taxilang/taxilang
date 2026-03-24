@@ -1,0 +1,44 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: hasEnumNamed
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.hasEnumNamed`
+
+## Signature
+
+```taxi
+declare extension function <T> hasEnumNamed(enumType: lang.taxi.Type<T>, enumName: String): Boolean
+```
+
+## Description
+
+Returns `true` if the enum has an explicitly declared member matching the provided name.
+
+Ignores default entries — an enum with a default value will return `false` for a name that is only matched by the default, not by an explicit declaration.
+
+```taxi
+find {
+   valid: Boolean = hasEnumNamed(OrderStatus, "PENDING")
+}
+```
+
+## Examples
+
+Returns true for a declared enum member name, false for a name not in the enum.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "enum OrderStatus { PENDING, APPROVED, REJECTED }",
+  "query" : "find {\n   hasPending: Boolean = hasEnumNamed(OrderStatus, \"PENDING\")\n   hasUnknown: Boolean = hasEnumNamed(OrderStatus, \"UNKNOWN\")\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"hasPending\": true, \"hasUnknown\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

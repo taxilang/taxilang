@@ -1,0 +1,31 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: currentDate
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.dates.currentDate`
+
+## Signature
+
+```taxi
+declare function currentDate():Date
+```
+
+## Description
+
+Returns the current local date (no time component).
+
+```taxi
+find {
+   @Format("yyyy-MM-dd")
+   today: Date = currentDate()
+}
+```
+
+
+

@@ -1,0 +1,49 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: containsAll
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.containsAll`
+
+## Signature
+
+```taxi
+declare extension function <T> containsAll(collection: T[], searchTarget:T[]): Boolean
+```
+
+## Description
+
+Returns `true` if the collection contains every element in the search targets array.
+
+Returns `true` when `searchTargets` is empty (an empty set is a subset of every set).
+
+```taxi
+// Check whether a product has all required tags
+find {
+   hasCertified: Boolean = ProductTag[].containsAll(['certified', 'in-stock'])
+}
+```
+
+**Known limitation:** When the collection uses a semantic type (e.g. `ProductTag inherits String`),
+passing string literals as `searchTargets` always returns `false` due to a type comparison bug.
+See `problems/containsAll.md`. Use a `String[]` collection as a workaround.
+
+## Examples
+
+Returns `true` when the collection contains all specified search values, `false` if any are missing.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Product {\n   name: String\n   tags: String[]\n}",
+  "query" : "given {\n   product: Product = { name: 'Laptop', tags: ['electronics', 'portable', 'work'] }\n}\nfind {\n   hasBothTags: Boolean = product.tags.containsAll(['electronics', 'portable'])\n   missingTag: Boolean = product.tags.containsAll(['electronics', 'gaming'])\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"hasBothTags\": true, \"missingTag\": false}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

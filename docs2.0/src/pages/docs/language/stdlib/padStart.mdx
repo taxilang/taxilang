@@ -1,0 +1,44 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: padStart
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.padStart`
+
+## Signature
+
+```taxi
+declare extension function padStart(input: String, length: Int, padWith: String):String
+```
+
+## Description
+
+Pads the string to the specified total `length` by prepending `padWith` characters at the start.
+
+`padWith` should be a single character — if multiple characters are passed, only the first is used.
+
+```taxi
+find { order: Order } as {
+   paddedId: String = order.id.padStart(8, '0')
+}
+```
+
+## Examples
+
+Zero-pads a short string to the target length from the left.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   padded: String = padStart('42', 6, '0')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"padded\": \"000042\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

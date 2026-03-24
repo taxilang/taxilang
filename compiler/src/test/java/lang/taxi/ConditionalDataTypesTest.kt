@@ -511,7 +511,7 @@ class ConditionalDataTypesTest {
          }
       """.trimIndent()
          .validated()
-         .shouldContainMessage("Type mismatch. Type of lang.taxi.Boolean is not assignable to type lang.taxi.String")
+         .shouldContainMessage("Type mismatch. Type of lang.taxi.String is not assignable to type lang.taxi.Boolean")
    }
 
    @Test
@@ -525,7 +525,7 @@ class ConditionalDataTypesTest {
             }
          }
       """.validated()
-         .shouldContainMessage("Type mismatch. Type of lang.taxi.String is not assignable to type lang.taxi.Boolean")
+         .shouldContainMessage("Type mismatch. Type of lang.taxi.Boolean is not assignable to type lang.taxi.String")
    }
 
    @Test

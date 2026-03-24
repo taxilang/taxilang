@@ -128,7 +128,7 @@ data class HttpOperation(val method: String, val url: String) : AnnotationProvid
       }
 
       fun fromQuery(query: TaxiQlQuery): HttpOperation? {
-         val httpAnnotation = query.annotations.singleOrNull { annotation -> annotation.name == HttpOperation.NAME }
+         val httpAnnotation = query.annotations.firstOrNull { annotation -> annotation.name == HttpOperation.NAME }
          return if (httpAnnotation != null) {
             fromAnnotation(httpAnnotation)
          } else null

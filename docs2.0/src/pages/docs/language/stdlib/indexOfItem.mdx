@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: indexOfItem
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.indexOfItem`
+
+## Signature
+
+```taxi
+declare extension function <T> indexOfItem(collection:T[], searchItem: T):Int
+```
+
+## Description
+
+Returns the zero-based index of an item within a collection, or `-1` if the item was not found.
+
+```taxi
+find { playlist: Playlist } as {
+   songPosition: Int = playlist.tracks.indexOfItem('Bohemian Rhapsody')
+}
+```
+
+## Examples
+
+Returns the index of an item in the collection, or `-1` if not found.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Playlist {\n   tracks: String[]\n}",
+  "query" : "given {\n   playlist: Playlist = { tracks: ['Alpha', 'Beta', 'Gamma'] }\n}\nfind {\n   betaIndex: Int = playlist.tracks.indexOfItem('Beta')\n   missingIndex: Int = playlist.tracks.indexOfItem('Delta')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"betaIndex\": 1, \"missingIndex\": -1}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

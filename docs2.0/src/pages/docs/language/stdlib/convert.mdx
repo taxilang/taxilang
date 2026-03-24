@@ -1,0 +1,45 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: convert
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.convert`
+
+## Signature
+
+```taxi
+declare extension function <T> convert(source: Any, targetType: lang.taxi.Type<T>): T
+```
+
+## Description
+
+Converts a source value to the target type using only the data already available — no service calls are made.
+
+This is faster than a full projection (`source as TargetType`), but less powerful: only the fields present in the source are mapped. Missing fields are not discovered from services.
+
+```taxi
+// Convert an Order to a Receipt using only the Order's own fields
+find {
+   receipt: Receipt = Order.convert(Receipt)
+}
+```
+
+## Examples
+
+Converts an Order to a Receipt model using only the fields present in the source, without calling any services.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Order {\n   id: OrderId inherits String\n   amount: Amount inherits Decimal\n}\nmodel Receipt {\n   id: OrderId\n   amount: Amount\n}",
+  "query" : "given {\n   order: Order = { id: 'O1', amount: 99.99 }\n}\nfind {\n   receipt: Receipt = Order.convert(Receipt)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"receipt\": {\"id\": \"O1\", \"amount\": 99.99}}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

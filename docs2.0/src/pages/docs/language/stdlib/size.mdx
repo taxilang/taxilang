@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: size
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.size`
+
+## Signature
+
+```taxi
+declare extension function <T> size(collection:T[]):Int
+```
+
+## Description
+
+Returns the number of elements in the collection.
+
+```taxi
+find { orders: Order[] } as {
+   orderCount: Int = orders.size()
+}
+```
+
+## Examples
+
+Returns the number of elements in the collection.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Cart {\n   items: String[]\n}",
+  "query" : "given {\n   cart: Cart = { items: ['apple', 'banana', 'cherry'] }\n}\nfind {\n   itemCount: Int = cart.items.size()\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"itemCount\": 3}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

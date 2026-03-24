@@ -1,0 +1,43 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: allOf
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.allOf`
+
+## Signature
+
+```taxi
+declare function allOf(values:Boolean...): Boolean
+```
+
+## Description
+
+Returns `true` only if all provided boolean values are `true`. Equivalent to logical AND.
+
+This function ensures that every condition in a set must be satisfied.
+
+```taxi
+// Check if a user can purchase a premium item
+type CanPurchasePremium inherits Boolean by allOf(IsActive, HasSufficientFunds, IsVerified)
+```
+
+## Examples
+
+This example demonstrates how to use `allOf()` to verify if a user meets all required criteria for premium access.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Customer {\n   name: String\n   isActive: IsActive inherits Boolean\n   hasSufficientFunds: HasSufficientFunds inherits Boolean\n   isVerified: IsVerified inherits Boolean\n}\ntype HasPremiumAccess inherits Boolean by allOf(IsActive, HasSufficientFunds, IsVerified)",
+  "query" : "given {\n   customer: Customer = {\n      name: 'Bob',\n      isActive: true,\n      hasSufficientFunds: true,\n      isVerified: true\n   }\n}\nfind {\n   name: customer.name\n   hasPremiumAccess: HasPremiumAccess\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"name\": \"Bob\",\n               \"hasPremiumAccess\": true\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

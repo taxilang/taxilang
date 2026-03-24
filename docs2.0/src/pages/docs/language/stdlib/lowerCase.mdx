@@ -1,0 +1,42 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: lowerCase
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.lowerCase`
+
+## Signature
+
+```taxi
+declare extension function lowerCase(String):String
+```
+
+## Description
+
+Converts all characters in the string to lower case.
+
+```taxi
+find { product: Product } as {
+   lowerName: String = product.name.lowerCase()
+}
+```
+
+## Examples
+
+Converts a string to lower case.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "",
+  "query" : "find {\n   lower: String = lowerCase('HELLO WORLD')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"lower\": \"hello world\"}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+

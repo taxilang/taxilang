@@ -1,0 +1,45 @@
+---
+IMPORTANT: This file is generated. Do not edit manually.
+
+title: intersection
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+**Full name:** `taxi.stdlib.intersection`
+
+## Signature
+
+```taxi
+declare extension function <T> intersection(collectionA: T[], collectionB: T[]):T[]
+```
+
+## Description
+
+Returns a new collection containing only the elements that are present in both of the provided collections.
+
+This function identifies common elements between two collections.
+
+```taxi
+// Find common tags between two products
+find { productA: Product, productB: Product } as {
+   commonTags: intersection(productA.tags, productB.tags)
+}
+```
+
+## Examples
+
+Returns only elements present in both collections, identified by value equality.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "type Tag inherits String\nmodel Product {\n   name: ProductName inherits String\n   tags: Tag[]\n}",
+  "query" : "given {\n   productA: Product = {\n      name: 'Smartphone',\n      tags: ['electronics', 'mobile', 'camera', 'touchscreen']\n   },\n   productB: Product = {\n      name: 'Digital Camera',\n      tags: ['electronics', 'camera', 'photography', 'zoom']\n   }\n}\nfind {\n   productAName: productA.name\n   productBName: productB.name\n   commonTags: intersection(productA.tags, productB.tags)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\"productAName\": \"Smartphone\", \"productBName\": \"Digital Camera\", \"commonTags\": [\"electronics\", \"camera\"]}",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
